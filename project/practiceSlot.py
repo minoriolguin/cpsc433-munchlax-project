@@ -1,5 +1,7 @@
 class PracticeSlot:
-    def __init__(self, line):
+    def __init__(self, rawLine):
+        line = rawLine.split(',')
+        self.id = rawLine
         self.day = line[0]
         self.startTime = line[1]
         self.pracMax = int(line[2])
