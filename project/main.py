@@ -8,8 +8,12 @@
 from input_parser import InputParser
 # from scheduler import 
 
-# def main():
+def main():
+    # Assume that all values have to specified
+    parser = InputParser()
+    parser.main()
 
+    # print(parser.filename)
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
