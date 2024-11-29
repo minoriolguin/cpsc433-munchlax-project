@@ -8,8 +8,12 @@
 from input_parser import InputParser
 # from scheduler import 
 
-# def main():
+def main():
+    parser = InputParser()
+    parser.main()
 
+    # example: access games from parser
+    print(parser.games)
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
