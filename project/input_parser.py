@@ -6,7 +6,9 @@
 # Thi Ngoc Anh Nguyen
 
 import sys
-import os
+
+from gameSlot import GameSlot
+from practiceSlot import PracticeSlot
 
 class InputParser:
     
@@ -83,9 +85,9 @@ class InputParser:
                     lineArr = line.split(',')
                     match current_section:
                         case "Game slots":
-                            self.gameSlots.append(lineArr)
+                            self.gameSlots.append(GameSlot(lineArr))
                         case "Practice slots":
-                            self.practiceSlots.append(lineArr)
+                            self.practiceSlots.append(PracticeSlot(lineArr))
                         case "Games":
                             self.games.append(lineArr)
                         case "Practices":
@@ -106,21 +108,23 @@ class InputParser:
             print(f"Input file '{self.filename}' not found.")
             sys.exit(1)
 
-
     def main(self):
         self.parse_argument()
         self.parse_input_file()
 
         print(self.name)
         print(self.gameSlots)
-        print(self.practiceSlots)
-        print(self.games)
-        print(self.practiceSlots)
-        print(self.not_compatible)
-        print(self.unwanted)
-        print(self.preferences)
-        print(self.pair)
-        print(self.partial_assign)
+        # print(self.gameSlots[0].day)
+        # print(self.practiceSlots)
+        # print(self.practiceSlots[0].day)
+        # print(self.gameSlots[0].day)
+        # print(self.games)
+        # print(self.practiceSlots)
+        # print(self.not_compatible)
+        # print(self.unwanted)
+        # print(self.preferences)
+        # print(self.pair)
+        # print(self.partial_assign)
 
 
 
