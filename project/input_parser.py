@@ -9,6 +9,8 @@ import sys
 
 from gameSlot import GameSlot
 from practiceSlot import PracticeSlot
+from game import Game
+from practice import Practice
 
 class InputParser:
     
@@ -37,89 +39,98 @@ class InputParser:
         # Assume that all values have to specified
         if len(sys.argv) != 10:
             print("Usage: python main.py filename w_minfilled w_pref w_pair w_secdiff pen_gamemin pen_practicemin pen_notpaired pen_section")
-            sys.exit()
-
-        for i in range (2, len(sys.argv)):
-            if not sys.argv[i].isnumeric():
-                print("Usage: w_minfilled w_pref w_pair w_secdiff pen_gamemin pen_practicemin pen_notpaired pen_section are numbers")
-                sys.exit()
+            sys.exit(1)
 
         # Extract arguments from the command line
-        self.filename = sys.argv[1]
-        self.wminfilled = int(sys.argv[2])
-        self.wpref = int(sys.argv[3])
-        self.wpair = int(sys.argv[4])
-        self.wsecdiff = int(sys.argv[5])
-        self.pengamemin = int(sys.argv[6])
-        self.penpracticemin = int(sys.argv[7])
-        self.pennotpaired = int(sys.argv[8])
-        self.pensection = int(sys.argv[9])
+        # Assumption: all weights and penalties are integers (unsure as not specified in the problem)
+        try:
+            self.filename = sys.argv[1]
+            self.wminfilled = int(sys.argv[2])
+            self.wpref = int(sys.argv[3])
+            self.wpair = int(sys.argv[4])
+            self.wsecdiff = int(sys.argv[5])
+            self.pengamemin = int(sys.argv[6])
+            self.penpracticemin = int(sys.argv[7])
+            self.pennotpaired = int(sys.argv[8])
+            self.pensection = int(sys.argv[9])
+        except ValueError:
+            print("Error: weights and penalties must be integers")
+
 
 
     def parse_input_file(self):
         try:
             with open(self.filename, 'r') as file:
-                lines = file.readlines()
-                current_section = None
-
-                for i in range (len(lines)):
-                    line = lines[i]
+                for line in file:
                     line = line.strip()
 
                     # Skip empty lines
                     if not line:
                         continue
-                    
-                    # print(line)
 
                     # Check if the line is a section header
                     if line.endswith(':'):
                         current_section = line[:-1]  
                         continue
                     
-                    if current_section == 'Name':
-                        self.name = line
-                        continue
-
-
-                    lineArr = line.split(',')
                     match current_section:
+                        case 'Name':
+                            self.name = line
                         case "Game slots":
-                            self.gameSlots.append(GameSlot(lineArr))
+                            self.gameSlots.append(GameSlot(line))
                         case "Practice slots":
-                            self.practiceSlots.append(PracticeSlot(lineArr))
+                            self.practiceSlots.append(PracticeSlot(line))
                         case "Games":
-                            self.games.append(lineArr)
+                            self.games.append(Game(line))
                         case "Practices":
-                            self.practices.append(lineArr)
+                            self.practices.append(Practice(line))
                         case "Not compatible":
-                            self.not_compatible.append(lineArr)
+                            self.not_compatible.append(self.splitLineByComma(line))
                         case "Unwanted":
-                            self.unwanted.append(lineArr)
+                            self.unwanted.append(self.parseUnwanted_Partial(line))
                         case "Preferences":
-                            self.preferences.append(lineArr)
+                            self.preferences.append(self.parsePreference(line))
                         case "Pair":
-                            self.pair.append(lineArr)
+                            self.pair.append(self.splitLineByComma(line))
                         case "Partial assignments":
-                            self.partial_assign.append(lineArr)
+                            self.partial_assign.append(self.parseUnwanted_Partial(line))
                             
 
         except FileNotFoundError:
-            print(f"Input file '{self.filename}' not found.")
+            print(f"File '{self.filename}' not found.")
             sys.exit(1)
+
+    def splitLineByComma(self, line):
+        return [ele.strip() for ele in line.split(',')]
+
+    def parseUnwanted_Partial(self, rawLine):
+        line = [ele.strip() for ele in rawLine.split(',')]
+        return{
+            'id' : line[0],
+            'day' : line[1],
+            'time' : line[2],
+        }
+    
+    def parsePreference(self, rawLine):
+        line = [ele.strip() for ele in rawLine.split(',')]
+        return{
+            'day': line[0],
+            'time': line[1],
+            'id': line[2],
+            'score': line[3]
+        }
 
     def main(self):
         self.parse_argument()
         self.parse_input_file()
 
+        ## ------ DEBUG ------ ##
         print(self.name)
-        print(self.gameSlots)
+        # print(self.gameSlots)
         # print(self.gameSlots[0].day)
         # print(self.practiceSlots)
-        # print(self.practiceSlots[0].day)
-        # print(self.gameSlots[0].day)
         # print(self.games)
-        # print(self.practiceSlots)
+        # print(self.practices)
         # print(self.not_compatible)
         # print(self.unwanted)
         # print(self.preferences)
