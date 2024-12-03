@@ -56,6 +56,7 @@ def check_hard_constraints():
     if check_special_prectices():
         return False
 
+    # at this point all the hard constraints have passed
     return True
     
 def over_gamemax(slot: GameSlot):
