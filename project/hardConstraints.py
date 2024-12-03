@@ -5,12 +5,12 @@
 # Monica Nguyen
 # Thi Ngoc Anh Nguyen
 
+from input_parser import InputParser
 from practiceSlot import PracticeSlot
 from gameSlot import GameSlot
-from scheduler import Schedule ## 
 
 # function to check if all hard constraints are satisfied
-def check_hard_constraints():
+def check_hard_constraints(schedule: InputParser):
     # hard constraint 1
     if over_gamemax():
         return False
@@ -60,16 +60,16 @@ def check_hard_constraints():
     # at this point all the hard constraints have passed
     return True
     
-def over_gamemax(s: Schedule):
-    for game_slot in s.games: # how will the games be accessed for an assignment
+def over_gamemax(schedule: InputParser):
+    for game_slot in schedule.gameSlots:
         if len(game_slot.assignedGames) > game_slot.gamesMax:
             return True
     
     # at this point no game slot is over games max so this hard constraint passes
     return False
 
-def over_practicemax(s: Schedule):
-    for practice_slot in s.games: # how will the practices be accessed for an assignment
+def over_practicemax(schedule: InputParser):
+    for practice_slot in schedule.practiceSlots:
         if len(practice_slot.assignedPractices) > practice_slot.pracMax:
             return True
     
@@ -79,8 +79,17 @@ def over_practicemax(s: Schedule):
 def assign_equal():
     pass
 
-def notcompatable():
-    pass
+def notcompatable(schedule: InputParser):
+    game_and_practice_slots = schedule.gameSlots + schedule.practiceSlots
+    for slot in game_and_practice_slots:
+
+        # check that games/practices within the slot are compatable
+        if isinstance(slot, PracticeSlot):
+            for p1 in slot.assignPractices:
+                for p2 in slot.assignPractices:
+                    if p1 != p2:
+                        pass
+                        # how to check if compatable??
 
 def partassign():
     pass
