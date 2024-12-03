@@ -7,6 +7,7 @@
 
 from practiceSlot import PracticeSlot
 from gameSlot import GameSlot
+from scheduler import Schedule ## 
 
 # function to check if all hard constraints are satisfied
 def check_hard_constraints():
@@ -59,11 +60,21 @@ def check_hard_constraints():
     # at this point all the hard constraints have passed
     return True
     
-def over_gamemax(slot: GameSlot):
-    pass
+def over_gamemax(s: Schedule):
+    for game_slot in s.games: # how will the games be accessed for an assignment
+        if len(game_slot.assignedGames) > game_slot.gamesMax:
+            return True
+    
+    # at this point no game slot is over games max so this hard constraint passes
+    return False
 
-def over_practicemax(slot: PracticeSlot):
-    pass
+def over_practicemax(s: Schedule):
+    for practice_slot in s.games: # how will the practices be accessed for an assignment
+        if len(practice_slot.assignedPractices) > practice_slot.pracMax:
+            return True
+    
+    # at this point no practice slot is over practice max so this hard constraint passes
+    return False
 
 def assign_equal():
     pass
