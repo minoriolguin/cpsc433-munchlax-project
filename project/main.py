@@ -13,7 +13,7 @@ from input_parser import InputParser
 from scheduler import Scheduler
 from node import Node
 from collections import defaultdict
-from hardConstraints import check_hard_constraints
+from temp_hard_constr import check_hard_constraints
 
 # Initialize And-Tree root
 def initialize_root(events, game_slots, practice_slots, partial_assign):
