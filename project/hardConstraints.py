@@ -172,18 +172,24 @@ class HardConstraints:
         return False
 
     def check_overlapping(self, schedule):
-        level_times = {"U15": [], "U16": [], "U17": [], "U19": []}
+        levels = ["U15", "U16", "U17", "U19"]
+        tier_times = {}
         for slot in schedule.scheduleVersion.keys():
             if isinstance(slot, GameSlot):
                 for game in slot.assignedGames:
                     u_level = game.tier[0:3]
-                    if u_level in level_times.keys():
-                        if (slot.day, slot.startTime) in level_times[u_level]:
-                            # overlap found, hard constraint failed
-                            return True
+                    if u_level in levels:
+                        if game.tier in tier_times.keys():
+                            if (slot.day, slot.startTime) in tier_times[game.tier]:
+                                # overlap found, hard constraint failed
+                                return True
+                            else:
+                                # keep track of times with U15/U16/U17/U19 games assigned to them
+                                tier_times[game.tier].append((slot.day, slot.startTime))
                         else:
-                            # keep track of times with U15/U16/U17/U19 games assigned to them
-                            level_times[u_level].append((slot.day, slot.startTime))
+                            # keep track of tiers
+                            tier_times[game.tier] = [(slot.day, slot.startTime)]
+                            
         return False
 
     def check_meeting_time(self): # implemented in main
