@@ -18,23 +18,23 @@ from hardConstraints import HardConstraints
 # Initialize And-Tree root
 def initialize_root(events, game_slots, practice_slots, partial_assign):
     root_schedule = Scheduler(events=events)
-    
+
     # Check if game slot TU at 11:00 AM is in the file
     # Hard constraint general meeting
     filtered_game_slots = [
         slot for slot in game_slots
         if not (slot.day == "TU" and slot.startTime == "11:00")
     ]
-    
+
     # Add all other game slots and practices slots valid to be added
     for slot in filtered_game_slots + practice_slots:
         root_schedule.add_slot(slot)
-    
+
     # check if CMSA U12T1 or CMSA U13T1 requested special practice event
     for event in events:
         if event.id == "CMSA U12T1" or event.id == "CMSA U13T1":
             special_practice_id = f"{event.id}S"
-            special_practice_slot = next((slot for slot in practice_slots 
+            special_practice_slot = next((slot for slot in practice_slots
                                           if slot.day == "TU" and slot.startTime == "18:00"), None)
 
             if not special_practice_slot:
@@ -54,7 +54,7 @@ def initialize_root(events, game_slots, practice_slots, partial_assign):
     for assign in partial_assign:
         if 'id' not in assign or 'day' not in assign or 'time' not in assign:
             print(f"Invalid partial assignment format: {assign}")
-            return None 
+            return None
 
         event_id = assign['id']
         day = assign['day'].strip()
@@ -63,16 +63,16 @@ def initialize_root(events, game_slots, practice_slots, partial_assign):
         event = next((e for e in events if e.id == event_id), None)
         if not event:
             print(f"Event with ID '{event_id}' not found in events.")
-            return None 
+            return None
 
-        slot = next((s for s in filtered_game_slots + practice_slots 
+        slot = next((s for s in filtered_game_slots + practice_slots
                      if s.day == day and s.startTime == time), None)
         if not slot:
             print(f"Slot with day '{day}' and time '{time}' not found.")
-            return None 
+            return None
 
         root_schedule.assign_event(event, slot)
-                
+
     return Node(schedule=root_schedule, sol="?")
 
 # Helper function to sort by team (so if a team is selected it will try the team's game then their practice)
@@ -87,7 +87,7 @@ def group_events_by_team(events):
 def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, depth=0):
     # Base case: check if all events have been scheduled
     if not unscheduled_events:
-        if check_hard_constraints(node.schedule): 
+        if check_hard_constraints(node.schedule):
             print("\n********Valid Schedule Found********")
             node.schedule.print_schedule()
             print("\n")
@@ -134,7 +134,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, d
                 build_tree(child_node, remaining_events, child_slots, check_hard_constraints, depth + 1)
 
 
-# Main method 
+# Main method
 def main():
     parser = InputParser()
     parser.main()
@@ -149,7 +149,7 @@ def main():
     except ValueError as e:
         print(f"Error initializing root: {e}")
         return None
-    
+
     unscheduled_events = [event for event in events if not any(assign['id'] == event.id for assign in partial_assign)]
     slots = game_slots + practice_slots
 

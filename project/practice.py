@@ -18,7 +18,7 @@ class Practice:
             elif line[i] == 'OPN':
                 self.type = 'OPN'
                 self.index = int(line[i+1])
-            
+
 
     def __repr__(self):
         return f"Practice(league={self.league} tier={self.tier} div={self.div} type={self.type} index={self.index})"

@@ -19,55 +19,55 @@ class HardConstraints:
         # hard constraint 1
         if self.over_gamemax(schedule):
             return False
-        
+
         # hard constraint 2
         if self.over_practicemax(schedule):
             return False
-        
+
         # hard constraint 3
         if self.assign_equal():
             return False
-        
+
         # hard constraint 4
         if self.notcompatible():
             return False
-        
+
         # hard constraint 5
         if self.partassign():
             return False
-        
+
         # hard constraint 6
         if self.unwanted():
             return False
-        
+
         # city of calgary constraints:
 
         # city of calgary hard constraint 1
         if self.not_corresponding_games(): # check for both (monday, wednesday, friday) and (tuedsay, thursday)
             return False
-        
+
         # city of calgary hard constraint 2
         if self.not_corresponding_practices(): # check for both (monday, wednesday) and (tuedsay, thursday)
             return False
-        
+
         # city of calgary hard constraint 3
         if self.check_overlapping(schedule):
             return False
-        
+
         # city of calgary hard constraint 4
         if self.check_meeting_time():
             return False
-        
+
         # city of calgary hard constraint 5
         if self.check_special_practices():
             return False
-        
+
         if self.evening_divisions(schedule):
             return False
 
         # at this point all the hard constraints have passed
         return True
-    
+
     def over_gamemax(self, schedule): # can probably be combined with over_practicemax
         for slot in schedule.scheduleVersion.keys():
             if isinstance(slot, GameSlot):
@@ -97,7 +97,7 @@ class HardConstraints:
         #     # check if theres any common division
         #     if game_divisions.intersection(practice_divisions):
         #         return True  # constraint violated because an overlap between practices and games is found
-        return False 
+        return False
 
     def notcompatible(self):
         # combine all the slots into a single list
@@ -114,14 +114,14 @@ class HardConstraints:
         return False
 
     def partassign(self):
-        
+
         for partial_assg in self.input_parser.partial_assign:
             event, assigned_slot = partial_assg[0], partial_assg[1]
 
             # check to skip if assigned slot is the placeholder - "$"
             if assigned_slot == "$":
                 continue
-            
+
             for slot in self.input_parser.gameSlots + self.input_parser.practiceSlots:
                 if slot == assigned_slot:
                     if event not in slot.assignGames and event not in slot.assignPractices:
@@ -169,7 +169,7 @@ class HardConstraints:
                                 start = int(str(slot.startTime)[0:2])
                             if start < 18:
                                 return True
-       
+
         return False
 
     def check_overlapping(self, schedule):
@@ -190,7 +190,7 @@ class HardConstraints:
                         else:
                             # keep track of tiers
                             tier_times[game.tier] = [(slot.day, slot.startTime)]
-                            
+
         return False
 
     def check_meeting_time(self): # implemented in main
