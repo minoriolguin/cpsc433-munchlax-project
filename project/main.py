@@ -13,7 +13,7 @@ from input_parser import InputParser
 from scheduler import Scheduler
 from node import Node
 from collections import defaultdict
-from temp_hard_constr import check_hard_constraints
+from hardConstraints import HardConstraints
 
 # Initialize And-Tree root
 def initialize_root(events, game_slots, practice_slots, partial_assign):
@@ -84,7 +84,7 @@ def group_events_by_team(events):
     return grouped
 
 # And-Tree build
-def build_tree(node, unscheduled_events, parent_slots, depth=0):
+def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, depth=0):
     # Base case: check if all events have been scheduled
     if not unscheduled_events:
         if check_hard_constraints(node.schedule): 
@@ -131,7 +131,7 @@ def build_tree(node, unscheduled_events, parent_slots, depth=0):
 
                 # Continue to use recursion for remaining events
                 remaining_events = [e for e in unscheduled_events if e != event]
-                build_tree(child_node, remaining_events, child_slots, depth + 1)
+                build_tree(child_node, remaining_events, child_slots, check_hard_constraints, depth + 1)
 
 
 # Main method 
@@ -153,7 +153,9 @@ def main():
     unscheduled_events = [event for event in events if not any(assign['id'] == event.id for assign in partial_assign)]
     slots = game_slots + practice_slots
 
-    build_tree(root, unscheduled_events, slots)
+    hardConstraints = HardConstraints(parser)
+
+    build_tree(root, unscheduled_events, slots, hardConstraints.check_hard_constraints)
 
     return root
 
