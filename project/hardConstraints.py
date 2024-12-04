@@ -17,11 +17,11 @@ class HardConstraints:
     # function to check if all hard constraints are satisfied
     def check_hard_constraints(self, schedule):
         # hard constraint 1
-        if self.over_gamemax():
+        if self.over_gamemax(schedule):
             return False
         
         # hard constraint 2
-        if self.over_practicemax():
+        if self.over_practicemax(schedule):
             return False
         
         # hard constraint 3
@@ -67,20 +67,21 @@ class HardConstraints:
 
         # at this point all the hard constraints have passed
         return True
-        
-    def over_gamemax(self):
-        for game_slot in self.input_parser.gameSlots:
-            if len(game_slot.assignedGames) > game_slot.gameMax:
-                return True
-        
+    
+    def over_gamemax(self, schedule): # can probably be combined with over_practicemax
+        for slot in schedule.scheduleVersion.keys():
+            if isinstance(slot, GameSlot):
+                if len(slot.assignedGames) > slot.gameMax:
+                    return True
         # at this point no game slot is over games max so this hard constraint passes
         return False
 
-    def over_practicemax(self):
-        for practice_slot in self.input_parser.practiceSlots:
-            if len(practice_slot.assignedPractices) > practice_slot.pracMax:
-                return True
-        
+    def over_practicemax(self, schedule):
+        for slot in schedule.scheduleVersion.keys():
+            if isinstance(slot, PracticeSlot):
+                if len(slot.assignedPractices) > slot.pracMax:
+                    return True
+            pass
         # at this point no practice slot is over practice max so this hard constraint passes
         return False
 
