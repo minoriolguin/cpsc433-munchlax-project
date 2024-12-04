@@ -62,7 +62,7 @@ def check_hard_constraints(schedule: InputParser):
     
 def over_gamemax(schedule: InputParser):
     for game_slot in schedule.gameSlots:
-        if len(game_slot.assignedGames) > game_slot.gamesMax:
+        if len(game_slot.assignGames) > game_slot.gameMax:
             return True
     
     # at this point no game slot is over games max so this hard constraint passes
@@ -70,7 +70,7 @@ def over_gamemax(schedule: InputParser):
 
 def over_practicemax(schedule: InputParser):
     for practice_slot in schedule.practiceSlots:
-        if len(practice_slot.assignedPractices) > practice_slot.pracMax:
+        if len(practice_slot.assignPractices) > practice_slot.pracMax:
             return True
     
     # at this point no practice slot is over practice max so this hard constraint passes
@@ -78,12 +78,12 @@ def over_practicemax(schedule: InputParser):
 
 def assign_equal(schedule: InputParser):
     for slot in schedule.slots:
-        games = slot.assignedGames
-        practices = slot.assignedPractices
+        games = slot.assignGames
+        practices = slot.assignPractices
 
         # check for overlap in divisions
-        game_divisions = set(game.division for game in games)
-        practice_divisions = set(practice.division for practice in practices)
+        game_divisions = set(game.div for game in games)
+        practice_divisions = set(practice.div for practice in practices)
 
         # check if theres any common division
         if game_divisions.intersection(practice_divisions):
@@ -91,22 +91,33 @@ def assign_equal(schedule: InputParser):
     return False 
 
 def notcompatible(schedule: InputParser):
-    game_and_practice_slots = schedule.gameSlots + schedule.practiceSlots
-    for slot in game_and_practice_slots:
+    # combine all the slots into a single list
+    all_slots = schedule.gameSlots + schedule.practiceSlots
 
-        # check that games/practices within the slot are compatable
-        if isinstance(slot, PracticeSlot):
-            for p1 in slot.assignPractices:
-                for p2 in slot.assignPractices:
-                    if p1 != p2:
-                        pass
-                        # how to check if compatable??
+    # check each non compatible pair
+    for event_a, event_b in schedule.not_compatible:
+        # check if both the events are assigned to the same slot
+        if any( (event_a in slot.assignGames + slot.assignPractices) and (event_b in slot.assignGames + slot.assignPractices)
+            for slot in all_slots):
+            return True  # constraint violated
+
+    # at this point no not-compatible pairs share the same slot
+    return False
 
 def partassign():
     pass
 
-def unwanted():
-    pass
+def unwanted(schedule: InputParser):
+    # go through all the unwanted constraints
+    for unwanted_constraints in schedule.unwanted:
+        event, unwanted_slot = unwanted_constraints[0], unwanted_constraints[1]
+
+    # check if event is assigned to unwanted slot
+    for slot in schedule.gameSlots + schedule.practiceSlots:
+        if slot == unwanted_slot:
+            if event in slot.assignGames or event in slot.assignPractices:
+                return True # constraint violated
+    return False
 
 def not_corresponding_games():
     pass
