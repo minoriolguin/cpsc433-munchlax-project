@@ -7,7 +7,7 @@ class PracticeSlot:
         self.pracMax = int(line[2].strip())
         self.pracMin = int(line[3].strip())
         self.assignedPractices = []
-        
+
     def is_full(self):
         return len(self.assignedPractices) >= self.pracMax
 
@@ -19,6 +19,6 @@ class PracticeSlot:
         copied_slot.pracMin = self.pracMin
         copied_slot.assignedPractices = self.assignedPractices[:]
         return copied_slot
-    
+
     def __repr__(self):
         return f"PracticeSlot(day={self.day}, startTime={self.startTime}, pracMax={self.pracMax}, pracMin={self.pracMin})"

@@ -7,10 +7,10 @@ class GameSlot:
         self.gameMax = int(line[2].strip())
         self.gameMin = int(line[3].strip())
         self.assignedGames = []
-        
+
     def is_full(self):
         return len(self.assignedGames) >= self.gameMax
-    
+
     def copy(self):
         copied_slot = GameSlot(self.id)
         copied_slot.day = self.day

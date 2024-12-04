@@ -14,52 +14,52 @@ def check_hard_constraints(schedule):
     # hard constraint 1
     if over_gamemax(schedule):
         return False
-    
+
     # hard constraint 2
     if over_practicemax(schedule):
         return False
-    
+
     # hard constraint 3
     if assign_equal():
         return False
-    
+
     # hard constraint 4
     if notcompatable(schedule):
         return False
-    
+
     # hard constraint 5
     if partassign():
         return False
-    
+
     # hard constraint 6
     if unwanted():
         return False
-    
+
     # city of calgary constraints:
 
     # city of calgary hard constraint 1
     if not_corresponding_games(): # check for both (monday, wednesday, friday) and (tuedsay, thursday)
         return False
-    
+
     # city of calgary hard constraint 2
     if not_corresponding_practices(): # check for both (monday, wednesday) and (tuedsay, thursday)
         return False
-    
+
     # city of calgary hard constraint 3
     if check_overlapping():
         return False
-    
+
     # city of calgary hard constraint 4
     if check_meeting_time():
         return False
-    
+
     # city of calgary hard constraint 5
     if check_special_practices():
         return False
 
     # at this point all the hard constraints have passed
     return True
-    
+
 def over_gamemax(schedule): # can probably be combined with over_practicemax
     for slot in schedule.scheduleVersion.keys():
          if isinstance(slot, GameSlot):

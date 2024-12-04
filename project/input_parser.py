@@ -13,7 +13,7 @@ from game import Game
 from practice import Practice
 
 class InputParser:
-    
+
     def __init__(self):
         self.name = ''
         self.gameSlots = []
@@ -70,9 +70,9 @@ class InputParser:
 
                     # Check if the line is a section header
                     if line.endswith(':'):
-                        current_section = line[:-1]  
+                        current_section = line[:-1]
                         continue
-                    
+
                     match current_section:
                         case 'Name':
                             self.name = line
@@ -94,7 +94,7 @@ class InputParser:
                             self.pair.append(self.splitLineByComma(line))
                         case "Partial assignments":
                             self.partial_assign.append(self.parseUnwanted_Partial(line))
-                            
+
 
         except FileNotFoundError:
             print(f"File '{self.filename}' not found.")
@@ -110,7 +110,7 @@ class InputParser:
             'day' : line[1],
             'time' : line[2],
         }
-    
+
     def parsePreference(self, rawLine):
         line = [ele.strip() for ele in rawLine.split(',')]
         return{
