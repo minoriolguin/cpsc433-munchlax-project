@@ -5,21 +5,26 @@
 # Monica Nguyen
 # Thi Ngoc Anh Nguyen
 
+from game import Game
+from practice import Practice
 from practiceSlot import PracticeSlot
 from gameSlot import GameSlot
             
 class Scheduler:
     def __init__(self, events=None):
-        self.scheduleVersion = {} 
+        self.scheduleVersion = {}
+        self.events = events if events is not None else []
+        self.scheduled_events = []
 
     def add_slot(self, slot):
         if slot not in self.scheduleVersion:
             self.scheduleVersion[slot] = "$" 
 
     def assign_event(self, event, slot):
-        if slot not in self.scheduleVersion:
-            raise ValueError(f"Slot {slot} does not exist in the schedule.")
-
+        if isinstance(event, Game):
+            slot.assignedGames.append(event)
+        elif isinstance(event, Practice):
+            slot.assignedPractices.append(event)
         self.scheduleVersion[slot] = event
 
     def remove_event(self, slot):
@@ -28,10 +33,6 @@ class Scheduler:
             
     def get_schedule(self):
         return self.scheduleVersion
-    
-    def is_valid_schedule(self, events):
-        assigned_events = set(event for event in self.scheduleVersion.values() if event != "$")
-        return all(event in assigned_events for event in events)
     
     def calculate_eval_value(self):
         eval_value = 0
@@ -53,7 +54,7 @@ class Scheduler:
             print(f"{event.id:<{id_width}}{slot_info:<{slot_width}}")
 
     def copy_schedule(self):
-        new_schedule = Scheduler()
+        new_schedule = Scheduler(events=self.events) 
         new_schedule.scheduleVersion = self.scheduleVersion.copy()
         return new_schedule
     

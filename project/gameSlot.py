@@ -6,10 +6,19 @@ class GameSlot:
         self.startTime = line[1].strip()
         self.gameMax = int(line[2].strip())
         self.gameMin = int(line[3].strip())
-        self.assignGames = []
+        self.assignedGames = []
         
     def is_full(self):
-        return len(self.assignGames) >= self.gameMax
+        return len(self.assignedGames) >= self.gameMax
+    
+    def copy(self):
+        copied_slot = GameSlot(self.id)
+        copied_slot.day = self.day
+        copied_slot.startTime = self.startTime
+        copied_slot.gameMax = self.gameMax
+        copied_slot.gameMin = self.gameMin
+        copied_slot.assignedGames = self.assignedGames[:]
+        return copied_slot
 
     def __repr__(self):
         return f"GameSlot(day={self.day}, startTime={self.startTime}, gameMax={self.gameMax}, gameMin={self.gameMin})"
