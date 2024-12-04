@@ -87,7 +87,7 @@ def group_events_by_team(events):
 def build_tree(node, unscheduled_events, parent_slots, depth=0):
     # Base case: check if all events have been scheduled
     if not unscheduled_events:
-        if check_hard_constraints(node.schedule):  # Use schedule instead of slots
+        if check_hard_constraints(node.schedule): 
             print("\n********Valid Schedule Found********")
             node.schedule.print_schedule()
             print("\n")
@@ -121,9 +121,9 @@ def build_tree(node, unscheduled_events, parent_slots, depth=0):
                 new_schedule.assign_event(event, slot)
 
                 # Check the new schedule with hard constraints
-                # if not check_hard_constraints(new_schedule):
-                #     print(f"Skipping invalid schedule: {event.id} in {slot.day}, {slot.startTime}")
-                #     continue
+                if not check_hard_constraints(new_schedule):
+                    print(f"Skipping invalid schedule: {event.id} in {slot.day}, {slot.startTime}")
+                    continue
 
                 # Create a new node if valid
                 child_node = Node(schedule=new_schedule, sol="?")
