@@ -21,13 +21,16 @@ def initialize_root(events, game_slots, practice_slots, partial_assign):
     
     # Check if game slot TU at 11:00 AM is in the file
     # Hard constraint general meeting
-    filtered_game_slots = [
-        slot for slot in game_slots
-        if not (slot.day == "TU" and slot.startTime == "11:00")
-    ]
+    # filtered_game_slots = [
+    #     slot for slot in game_slots
+    #     if not (slot.day == "TU" and slot.startTime == "11:00")
+    # ]
     
     # Add all other game slots and practices slots valid to be added
-    for slot in filtered_game_slots + practice_slots:
+    # for slot in filtered_game_slots + practice_slots:
+    #     root_schedule.add_slot(slot)
+
+    for slot in game_slots + practice_slots:
         root_schedule.add_slot(slot)
     
     # check if CMSA U12T1 or CMSA U13T1 requested special practice event
@@ -116,7 +119,8 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, d
                     continue
 
                 # Create a new node and copy current state
-                child_slots = [s.copy() for s in parent_slots]
+                # child_slots = [s.copy() for s in parent_slots]
+                child_slots = parent_slots
                 new_schedule = node.schedule.copy_schedule()
                 new_schedule.assign_event(event, slot)
 

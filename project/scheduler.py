@@ -18,14 +18,16 @@ class Scheduler:
 
     def add_slot(self, slot):
         if slot not in self.scheduleVersion:
-            self.scheduleVersion[slot] = "$" 
+            # self.scheduleVersion[slot] = "$" 
+            self.scheduleVersion[slot] = []
 
     def assign_event(self, event, slot):
         if isinstance(event, Game):
             slot.assignedGames.append(event)
         elif isinstance(event, Practice):
             slot.assignedPractices.append(event)
-        self.scheduleVersion[slot] = event
+        # self.scheduleVersion[slot] = event
+        self.scheduleVersion[slot].append(event)
 
     def remove_event(self, slot):
         if slot in self.scheduleVersion:
@@ -45,16 +47,19 @@ class Scheduler:
         id_width = 30 
         slot_width = 20 
 
-        sorted_schedule = sorted(
-            [(event, slot) for slot, event in self.scheduleVersion.items() if event != "$"],
-            key=lambda x: x[0].id)
+        # sorted_schedule = sorted(
+        #     [(event, slot) for slot, event in self.scheduleVersion.items() if event != "$"],
+        #     key=lambda x: x[0].id)
 
-        for event, slot in sorted_schedule:
-            slot_info = f": {slot.day}, {slot.startTime}" 
-            print(f"{event.id:<{id_width}}{slot_info:<{slot_width}}")
+        for slot, events in self.scheduleVersion.items():
+            for event in events:
+                slot_info = f": {slot.day}, {slot.startTime}" 
+                print(f"{event.id:<{id_width}}{slot_info:<{slot_width}}")
 
     def copy_schedule(self):
-        new_schedule = Scheduler(events=self.events) 
-        new_schedule.scheduleVersion = self.scheduleVersion.copy()
-        return new_schedule
+        # new_schedule = Scheduler(events=self.events) 
+        # new_schedule.scheduleVersion = self.scheduleVersion.copy()
+        # return new_schedule
+        return self
+
     
