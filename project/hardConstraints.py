@@ -54,7 +54,7 @@ def check_hard_constraints(schedule: InputParser):
         return False
     
     # city of calgary hard constraint 5
-    if check_special_prectices():
+    if check_special_practices():
         return False
     
     if evening_divisions():
@@ -155,5 +155,5 @@ def check_overlapping():
 def check_meeting_time():
     pass
 
-def check_special_prectices():
+def check_special_practices():
     pass
