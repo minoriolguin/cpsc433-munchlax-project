@@ -60,21 +60,22 @@ def check_hard_constraints(schedule):
     # at this point all the hard constraints have passed
     return True
     
-def over_gamemax(schedule):
-    # for game_slot in schedule.gameSlots:
-    #     if len(game_slot.assignedGames) > game_slot.gamesMax:
-    #         return True
-        pass
-    # # at this point no game slot is over games max so this hard constraint passes
-    # return False
+def over_gamemax(schedule): # can probably be combined with over_practicemax
+    for slot in schedule.scheduleVersion.keys():
+         if isinstance(slot, GameSlot):
+            if len(slot.assignedGames) > slot.gameMax:
+                return True
+    # at this point no game slot is over games max so this hard constraint passes
+    return False
 
 def over_practicemax(schedule):
-    # for practice_slot in schedule.practiceSlots:
-    #     if len(practice_slot.assignedPractices) > practice_slot.pracMax:
-    #         return True
+    for slot in schedule.scheduleVersion.keys():
+        if isinstance(slot, PracticeSlot):
+            if len(slot.assignedPractices) > slot.pracMax:
+                return True
         pass
     # at this point no practice slot is over practice max so this hard constraint passes
-    # return False
+    return False
 
 def assign_equal():
     pass
