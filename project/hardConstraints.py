@@ -104,8 +104,21 @@ def notcompatible(schedule: InputParser):
     # at this point no not-compatible pairs share the same slot
     return False
 
-def partassign():
-    pass
+def partassign(schedule: InputParser):
+    
+    for partial_assg in schedule.partial_assign:
+        event, assigned_slot = partial_assg[0], partial_assg[1]
+
+        # check to skip if assigned slot is the placeholder - "$"
+        if assigned_slot == "$":
+            continue
+        
+        for slot in schedule.gameSlots + schedule.practiceSlots:
+            if slot == assigned_slot:
+                if event not in slot.assignGames and event not in slot.assignPractices:
+                    return True
+    return False
+
 
 def unwanted(schedule: InputParser):
     # go through all the unwanted constraints
