@@ -24,7 +24,7 @@ def check_hard_constraints(schedule: InputParser):
         return False
     
     # hard constraint 4
-    if notcompatable():
+    if notcompatible():
         return False
     
     # hard constraint 5
@@ -76,10 +76,21 @@ def over_practicemax(schedule: InputParser):
     # at this point no practice slot is over practice max so this hard constraint passes
     return False
 
-def assign_equal():
-    pass
+def assign_equal(schedule: InputParser):
+    for slot in schedule.slots:
+        games = slot.assignedGames
+        practices = slot.assignedPractices
 
-def notcompatable(schedule: InputParser):
+        # check for overlap in divisions
+        game_divisions = set(game.division for game in games)
+        practice_divisions = set(practice.division for practice in practices)
+
+        # check if theres any common division
+        if game_divisions.intersection(practice_divisions):
+            return True  # constraint violated because an overlap between practices and games is found
+    return False 
+
+def notcompatible(schedule: InputParser):
     game_and_practice_slots = schedule.gameSlots + schedule.practiceSlots
     for slot in game_and_practice_slots:
 
