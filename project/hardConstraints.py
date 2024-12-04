@@ -180,7 +180,6 @@ class HardConstraints:
                     if u_level in level_times.keys():
                         if (slot.day, slot.startTime) in level_times[u_level]:
                             # overlap found, hard constraint failed
-                            print("here")
                             return True
                         else:
                             # keep track of times with U15/U16/U17/U19 games assigned to them
