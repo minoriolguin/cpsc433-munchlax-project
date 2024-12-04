@@ -178,10 +178,13 @@ class HardConstraints:
                 for game in slot.assignedGames:
                     u_level = game.tier[0:3]
                     if u_level in level_times.keys():
-                        if slot.startTime in level_times[u_level]:
-                            schedule.print_schedule()
+                        if (slot.day, slot.startTime) in level_times[u_level]:
+                            # overlap found, hard constraint failed
+                            print("here")
+                            return True
                         else:
-                            level_times[u_level].append(slot.startTime)
+                            # keep track of times with U15/U16/U17/U19 games assigned to them
+                            level_times[u_level].append((slot.day, slot.startTime))
         return False
 
     def check_meeting_time(self): # implemented in main
