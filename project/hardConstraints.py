@@ -8,6 +8,7 @@
 from input_parser import InputParser
 from practiceSlot import PracticeSlot
 from gameSlot import GameSlot
+from practice import Practice
 
 class HardConstraints:
     def __init__(self, input_parser: InputParser):
@@ -50,7 +51,7 @@ class HardConstraints:
             return False
         
         # city of calgary hard constraint 3
-        if self.check_overlapping():
+        if self.check_overlapping(schedule):
             return False
         
         # city of calgary hard constraint 4
@@ -61,7 +62,7 @@ class HardConstraints:
         if self.check_special_practices():
             return False
         
-        if self.evening_divisions():
+        if self.evening_divisions(schedule):
             return False
 
         # at this point all the hard constraints have passed
@@ -139,25 +140,52 @@ class HardConstraints:
                     return True # constraint violated
         return False
 
-    def not_corresponding_games(self): # this function isn't needed? combine mon, wed, fri slots in input parser?
+    def not_corresponding_games(self): # is this function isn't needed? combine mon, wed, fri slots in input parser?
         return False
 
-    def not_corresponding_practices(self):
+    def not_corresponding_practices(self): # is this function isn't needed? combine mon, wed, fri slots in input parser?
         return False
 
-    def evening_divisions(self):
-        for gameSlot in self.input_parser.gameSlots:
-            for game in gameSlot.assignedGames:
-                if str(game.div)[0] == "9" and int(str(gameSlot.startTime)[0:2]) < 12:
-                    return True
-        
+    def evening_divisions(self, schedule):
+        for slot in schedule.scheduleVersion.keys():
+            if isinstance(slot, PracticeSlot):
+                for practice in slot.assignedPractices:
+                    if practice.div:
+                        if str(practice.div)[0] == "9":
+                            if len(str(slot.startTime)) == 4:
+                                start = int(str(slot.startTime)[0:1])
+                            else:
+                                start = int(str(slot.startTime)[0:2])
+                            if start < 18:
+                                return True
+            elif isinstance(slot, GameSlot):
+                for game in slot.assignedGames:
+                    if game.div:
+                        if str(game.div)[0] == "9":
+                            if len(str(slot.startTime)) == 4:
+                                start = int(str(slot.startTime)[0:1])
+                            else:
+                                start = int(str(slot.startTime)[0:2])
+                            if start < 18:
+                                return True
+       
         return False
 
-    def check_overlapping(self):
+    def check_overlapping(self, schedule):
+        level_times = {"U15": [], "U16": [], "U17": [], "U19": []}
+        for slot in schedule.scheduleVersion.keys():
+            if isinstance(slot, GameSlot):
+                for game in slot.assignedGames:
+                    u_level = game.tier[0:3]
+                    if u_level in level_times.keys():
+                        if slot.startTime in level_times[u_level]:
+                            schedule.print_schedule()
+                        else:
+                            level_times[u_level].append(slot.startTime)
         return False
 
-    def check_meeting_time(self):
+    def check_meeting_time(self): # implemented in main
         return False
 
-    def check_special_practices(self):
+    def check_special_practices(self): # implemented in main
         return False
