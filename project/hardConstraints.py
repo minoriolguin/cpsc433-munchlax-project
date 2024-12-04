@@ -56,6 +56,9 @@ def check_hard_constraints(schedule: InputParser):
     # city of calgary hard constraint 5
     if check_special_prectices():
         return False
+    
+    if evening_divisions():
+        return False
 
     # at this point all the hard constraints have passed
     return True
@@ -132,11 +135,19 @@ def unwanted(schedule: InputParser):
                 return True # constraint violated
     return False
 
-def not_corresponding_games():
+def not_corresponding_games(): # this function isn't needed? combine mon, wed, fri slots in input parser?
     pass
 
 def not_corresponding_practices():
     pass
+
+def evening_divisions(schedule: InputParser):
+    for gameSlot in schedule.gameSlots:
+        for game in gameSlot.games:
+            if str(game.div)[0] == "9" and int(str(gameSlot.startTime)[0:2]) < 12:
+                return True
+    
+    return False
 
 def check_overlapping():
     pass
