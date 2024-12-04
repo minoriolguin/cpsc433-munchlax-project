@@ -140,10 +140,10 @@ class HardConstraints:
                     return True # constraint violated
         return False
 
-    def not_corresponding_games(self): # is this function isn't needed? combine mon, wed, fri slots in input parser?
+    def not_corresponding_games(self): # is this function needed? combine mon, wed, fri slots in input parser?
         return False
 
-    def not_corresponding_practices(self): # is this function isn't needed? combine mon, wed, fri slots in input parser?
+    def not_corresponding_practices(self): # is this function needed? combine mon, wed, fri slots in input parser?
         return False
 
     def evening_divisions(self, schedule):
