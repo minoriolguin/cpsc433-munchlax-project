@@ -30,8 +30,8 @@ class InputParser:
         self.w_pre = 0
         self.w_pair = 0
         self.w_secdiff = 0
-        self.pen_gamemin = 0
-        self.pen_practicemin = 0
+        self.pengamemin = 0
+        self.penpracticemin = 0
         self.pen_notpaired = 0
         self.pen_section = 0
 
