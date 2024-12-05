@@ -125,7 +125,7 @@ class InputParser:
         self.parse_input_file()
 
         ## ------ DEBUG ------ ##
-        print(self.name)
+        # print(self.name)
         # print(self.gameSlots)
         # print(self.gameSlots[0].day)
         # print(self.practiceSlots)

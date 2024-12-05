@@ -11,6 +11,9 @@ class PracticeSlot:
     def is_full(self):
         return len(self.assignedPractices) >= self.pracMax
 
+    def remaining_capacity(self):
+        return self.pracMax - len(self.assignedPractices)
+
     def copy(self):
         copied_slot = PracticeSlot(self.id)
         copied_slot.day = self.day
