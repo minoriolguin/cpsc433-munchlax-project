@@ -69,19 +69,30 @@ class HardConstraints:
         return True
 
     def over_gamemax(self, schedule): # can probably be combined with over_practicemax
-        for slot in schedule.scheduleVersion.keys():
-            if isinstance(slot, GameSlot):
-                if len(slot.assignedGames) > slot.gameMax:
-                    return True
+        num_games = {}
+        for slot, game in schedule.scheduleVersion.items():
+            if game != "$" and isinstance(slot, GameSlot):
+                if slot.id not in num_games.keys():
+                    num_games[slot.id] = 1
+                else:
+                    if num_games[slot.id] + 1 > slot.gameMax:
+                        return True
+                    else:
+                        num_games[slot.id] += 1
         # at this point no game slot is over games max so this hard constraint passes
         return False
 
     def over_practicemax(self, schedule):
-        for slot in schedule.scheduleVersion.keys():
-            if isinstance(slot, PracticeSlot):
-                if len(slot.assignedPractices) > slot.pracMax:
-                    return True
-            pass
+        num_practices = {}
+        for slot, practice in schedule.scheduleVersion.items():
+            if practice != "$" and isinstance(slot, PracticeSlot):
+                if slot.id not in num_practices.keys():
+                    num_practices[slot.id] = 1
+                else:
+                    if num_practices[slot.id] + 1 > slot.pracMax:
+                        return True
+                    else:
+                        num_practices[slot.id] += 1
         # at this point no practice slot is over practice max so this hard constraint passes
         return False
 
