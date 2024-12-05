@@ -44,18 +44,10 @@ class HardConstraints:
             return False
 
         # hard constraint 6
-        if self.unwanted():
+        if self.unwanted(schedule):
             return False
 
         # city of calgary constraints:
-
-        # city of calgary hard constraint 1
-        if self.not_corresponding_games(): # check for both (monday, wednesday, friday) and (tuedsay, thursday)
-            return False
-
-        # city of calgary hard constraint 2
-        if self.not_corresponding_practices(): # check for both (monday, wednesday) and (tuedsay, thursday)
-            return False
 
         # city of calgary hard constraint 3
         if self.check_overlapping(schedule):
@@ -178,16 +170,12 @@ class HardConstraints:
         return False
 
 
-    def unwanted(self):
-        # go through all the unwanted constraints
-        for unwanted_constraints in self.input_parser.unwanted:
-            event, unwanted_slot = unwanted_constraints['id'], unwanted_constraints['time']
-
-        # check if event is assigned to unwanted slot
-        for slot in self.input_parser.gameSlots + self.input_parser.practiceSlots:
-            if slot == unwanted_slot:
-                if event in slot.assignGames or event in slot.assignPractices:
-                    return True # constraint violated
+    def unwanted(self, schedule):
+        for slot, event in schedule.scheduleVersion.items():
+            for unwanted in self.input_parser.unwanted:
+                if event != "$":
+                    if unwanted["id"] == event.id and unwanted["day"] == slot.day and unwanted["time"] == slot.startTime:
+                        return True
         return False
 
     def evening_divisions(self, schedule):
