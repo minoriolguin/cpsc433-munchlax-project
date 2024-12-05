@@ -12,7 +12,18 @@ from practice import Practice
 
 class HardConstraints:
     def __init__(self, input_parser: InputParser):
-          self.input_parser = input_parser
+        self.input_parser = input_parser
+
+        # add assocciated games and practices to the incompatability list
+        # so that we can reuse the compatability check to tell if assocciated practices and games are overlapping
+        for practice in input_parser.practices:
+            for game in input_parser.games:
+                if practice.div == "":
+                    if game.league == practice.league and game.tier == practice.tier:
+                        input_parser.not_compatible.append([game.id, practice.id])
+                else:
+                    if game.league == practice.league and game.tier == practice.tier and game.div == practice.div:
+                        input_parser.not_compatible.append([game.id, practice.id])
 
     # function to check if all hard constraints are satisfied
     def check_hard_constraints(self, schedule):
@@ -25,16 +36,12 @@ class HardConstraints:
             return False
 
         # hard constraint 3
-        if self.assign_equal():
-            return False
+        # if self.assign_equal(schedule):
+        #     return False
 
         # hard constraint 4
         if self.notcompatible(schedule):
             return False
-
-        # hard constraint 5
-        # if self.partassign():
-        #     return False
 
         # hard constraint 6
         if self.unwanted():
@@ -52,14 +59,6 @@ class HardConstraints:
 
         # city of calgary hard constraint 3
         if self.check_overlapping(schedule):
-            return False
-
-        # city of calgary hard constraint 4
-        if self.check_meeting_time():
-            return False
-
-        # city of calgary hard constraint 5
-        if self.check_special_practices():
             return False
 
         if self.evening_divisions(schedule):
@@ -94,20 +93,6 @@ class HardConstraints:
                     else:
                         num_practices[slot.id] += 1
         # at this point no practice slot is over practice max so this hard constraint passes
-        return False
-
-    def assign_equal(self):
-        # for slot in self.input_parser.slots:
-        #     games = slot.assignGames
-        #     practices = slot.assignPractices
-
-        #     # check for overlap in divisions
-        #     game_divisions = set(game.div for game in games)
-        #     practice_divisions = set(practice.div for practice in practices)
-
-        #     # check if theres any common division
-        #     if game_divisions.intersection(practice_divisions):
-        #         return True  # constraint violated because an overlap between practices and games is found
         return False
 
     def notcompatible(self, schedule):
@@ -172,7 +157,6 @@ class HardConstraints:
                     
                     # check for overlap in the time intervals
                     if max(start1, start2) < min(end1, end2):
-                        print("here")
                         return True
 
         # # at this point no non-compatible pairs share the same slot
@@ -204,12 +188,6 @@ class HardConstraints:
             if slot == unwanted_slot:
                 if event in slot.assignGames or event in slot.assignPractices:
                     return True # constraint violated
-        return False
-
-    def not_corresponding_games(self): # is this function needed? combine mon, wed, fri slots in input parser?
-        return False
-
-    def not_corresponding_practices(self): # is this function needed? combine mon, wed, fri slots in input parser?
         return False
 
     def evening_divisions(self, schedule):
@@ -258,14 +236,8 @@ class HardConstraints:
 
         return False
 
-    def check_meeting_time(self): # implemented in main
-        return False
-
-    def check_special_practices(self): # implemented in main
-        return False
-
 def is_game(id):
-    if "PRC" in id.split():
+    if "PRC" in id.split() or "OPN" in id.split():
         return False
     else:
         return True
