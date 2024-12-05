@@ -33,8 +33,8 @@ class HardConstraints:
             return False
 
         # hard constraint 5
-        if self.partassign():
-            return False
+        # if self.partassign():
+        #     return False
 
         # hard constraint 6
         if self.unwanted():

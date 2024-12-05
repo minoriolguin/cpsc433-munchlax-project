@@ -84,17 +84,17 @@ def group_events_by_team(events):
     return grouped
 
 # And-Tree build
-def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, depth=0):
+def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, pen_gamemin, pen_practicemin, depth=0):
     # Base case: check if all events have been scheduled
     if not unscheduled_events:
         if check_hard_constraints(node.schedule):
             print("\n********Valid Schedule Found********")
-            node.schedule.print_schedule()
+            node.schedule.print_schedule(pen_gamemin, pen_practicemin)
             print("\n")
             node.sol = "yes"
         else:
             print("\nInvalid Schedule:")
-            node.schedule.print_schedule()
+            node.schedule.print_schedule(pen_gamemin, pen_practicemin)
             node.sol = "?"
             print("\n")
         return
@@ -131,7 +131,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, d
 
                 # Continue to use recursion for remaining events
                 remaining_events = [e for e in unscheduled_events if e != event]
-                build_tree(child_node, remaining_events, child_slots, check_hard_constraints, depth + 1)
+                build_tree(child_node, remaining_events, child_slots, check_hard_constraints, pen_gamemin, pen_practicemin, depth + 1)
 
 
 # Main method
@@ -143,6 +143,8 @@ def main():
     game_slots = parser.gameSlots
     practice_slots = parser.practiceSlots
     partial_assign = parser.partial_assign
+    pen_gamemin = parser.pen_gamemin
+    pen_practicemin = parser.pen_practicemin
 
     try:
         root = initialize_root(events, game_slots, practice_slots, partial_assign)
@@ -155,7 +157,7 @@ def main():
 
     hardConstraints = HardConstraints(parser)
 
-    build_tree(root, unscheduled_events, slots, hardConstraints.check_hard_constraints)
+    build_tree(root, unscheduled_events, slots, hardConstraints.check_hard_constraints, pen_gamemin, pen_practicemin)
 
     return root
 
