@@ -16,6 +16,7 @@ class HardConstraints:
 
         # add assocciated games and practices to the incompatability list
         # so that we can reuse the compatability check to tell if assocciated practices and games are overlapping
+        # (hard assignment 3 in the project description)
         for practice in input_parser.practices:
             for game in input_parser.games:
                 if practice.div == "":
@@ -27,29 +28,20 @@ class HardConstraints:
 
     # function to check if all hard constraints are satisfied
     def check_hard_constraints(self, schedule):
-        # hard constraint 1
+
         if self.over_gamemax(schedule):
             return False
 
-        # hard constraint 2
         if self.over_practicemax(schedule):
             return False
 
-        # hard constraint 3
-        # if self.assign_equal(schedule):
-        #     return False
-
-        # hard constraint 4
         if self.notcompatible(schedule):
             return False
 
-        # hard constraint 6
         if self.unwanted(schedule):
             return False
 
         # city of calgary constraints:
-
-        # city of calgary hard constraint 3
         if self.check_overlapping(schedule):
             return False
 
@@ -151,24 +143,8 @@ class HardConstraints:
                     if max(start1, start2) < min(end1, end2):
                         return True
 
-        # # at this point no non-compatible pairs share the same slot
+        # at this point no non-compatible pairs share the same slot
         return False
-
-    def partassign(self):
-
-        for partial_assg in self.input_parser.partial_assign:
-            event, assigned_slot = partial_assg[0], partial_assg[1]
-
-            # check to skip if assigned slot is the placeholder - "$"
-            if assigned_slot == "$":
-                continue
-
-            for slot in self.input_parser.gameSlots + self.input_parser.practiceSlots:
-                if slot == assigned_slot:
-                    if event not in slot.assignGames and event not in slot.assignPractices:
-                        return True
-        return False
-
 
     def unwanted(self, schedule):
         for slot, event in schedule.scheduleVersion.items():
