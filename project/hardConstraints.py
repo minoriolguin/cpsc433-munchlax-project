@@ -29,7 +29,7 @@ class HardConstraints:
             return False
 
         # hard constraint 4
-        if self.notcompatible():
+        if self.notcompatible(schedule):
             return False
 
         # hard constraint 5
@@ -110,18 +110,72 @@ class HardConstraints:
         #         return True  # constraint violated because an overlap between practices and games is found
         return False
 
-    def notcompatible(self):
-        # combine all the slots into a single list
-        # all_slots = self.input_parser.gameSlots + self.input_parser.practiceSlots
+    def notcompatible(self, schedule):
+        for incompatable_pair in self.input_parser.not_compatible:
 
-        # # check each non compatible pair
-        # for event_a, event_b in self.input_parser.not_compatible:
-        #     # check if both the events are assigned to the same slot
-        #     if any( (event_a in slot.assignedGames + slot.assignedPractices) and (event_b in slot.assignGames + slot.assignPractices)
-        #         for slot in all_slots):
-        #         return True  # constraint violated
+            # find slot for event 1
+            event1_slot = None
+            event2_slot = None
+            for slot, event in schedule.scheduleVersion.items():
+                if event != "$":
+                    if event.id == incompatable_pair[0]:
+                        event1_slot = slot
+                    elif event.id == incompatable_pair[1]:
+                        event2_slot = slot
+            
+            if event1_slot is not None and event2_slot is not None:
+                d1 = event1_slot.day
+                d2 = event2_slot.day
+                if d1 == d2 or (d1 == "FR" and d2 == "MO") or (d1 == "MO" and d2 == "FR"):
+                    
+                    # convert the the times to ints
+                    if len(str(event1_slot.startTime)) == 4:
+                        start1 = int(str(event1_slot.startTime)[0:1])
+                    else:
+                        start1 = int(str(event1_slot.startTime)[0:2])
 
-        # # at this point no not-compatible pairs share the same slot
+                    if int(str(event1_slot.startTime)[len(str(event1_slot.startTime))-2:len(str(event1_slot.startTime))]) == 30:
+                        start1 += 0.5
+                    
+                    # convert the the times to ints
+                    if len(str(event2_slot.startTime)) == 4:
+                        start2 = int(str(event2_slot.startTime)[0:1])
+                    else:
+                        start2 = int(str(event2_slot.startTime)[0:2])
+
+                    if int(str(event2_slot.startTime)[len(str(event2_slot.startTime))-2:len(str(event2_slot.startTime))]) == 30:
+                        start2 += 0.5
+
+                    # calculate time interval
+                    end1 = 0
+                    end2 = 0
+
+                    if d1 == "MO":
+                        end1 = start1 + 1
+                    elif d1 == "TU":
+                        if is_game(incompatable_pair[0]):
+                            end1 = start1 + 1.5
+                        else:
+                            end1 = start1 + 2
+                    else:
+                        end1 = start1 + 2
+                    
+                    if d1 == "MO":
+                        end2 = start2 + 1
+                    elif d1 == "TU":
+                        if is_game(incompatable_pair[1]):
+                            end2 = start2 + 1.5
+                        else:
+                            end2 = start2 + 2
+                    else:
+                        end2 = start2 + 2
+                    
+                    # check for overlap in the time intervals
+                    if max(start1, start2) < min(end1, end2):
+                        print("here")
+                        return True
+
+        # # at this point no non-compatible pairs share the same slot
         return False
 
     def partassign(self):
@@ -209,3 +263,9 @@ class HardConstraints:
 
     def check_special_practices(self): # implemented in main
         return False
+
+def is_game(id):
+    if "PRC" in id.split():
+        return False
+    else:
+        return True
