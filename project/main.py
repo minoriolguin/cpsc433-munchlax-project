@@ -89,12 +89,12 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, p
     if not unscheduled_events:
         if check_hard_constraints(node.schedule):
             print("\n********Valid Schedule Found********")
-            node.schedule.print_schedule(pen_gamemin, pen_practicemin)
+            node.schedule.print_schedule(parent_slots, pen_gamemin, pen_practicemin)
             print("\n")
             node.sol = "yes"
         else:
             print("\nInvalid Schedule:")
-            node.schedule.print_schedule(pen_gamemin, pen_practicemin)
+            node.schedule.print_schedule(parent_slots, pen_gamemin, pen_practicemin)
             node.sol = "?"
             print("\n")
         return
@@ -143,8 +143,8 @@ def main():
     game_slots = parser.gameSlots
     practice_slots = parser.practiceSlots
     partial_assign = parser.partial_assign
-    pen_gamemin = parser.pen_gamemin
-    pen_practicemin = parser.pen_practicemin
+    pen_gamemin = parser.pengamemin
+    pen_practicemin = parser.penpracticemin
 
     try:
         root = initialize_root(events, game_slots, practice_slots, partial_assign)
