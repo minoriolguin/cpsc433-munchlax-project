@@ -40,16 +40,20 @@ class Scheduler:
     def calculate_eval_value(self, parent_slots, pen_gamemin, pen_practicemin):
         eval_value = 0
 
+        sorted_schedule = sorted(
+            [(event, slot) for slot, event in self.scheduleVersion.items() if event != "$"],
+            key=lambda x: x[0].id)
+
         for parent_slot in parent_slots:
             assigned_games = 0
             assigned_practices = 0
 
-            for slot, event in self.scheduleVersion.items():
+            for event, slot in sorted_schedule:
                 if self.is_same_slot(slot, parent_slot):
                     if isinstance(slot, GameSlot):
-                        assigned_games = assigned_games + len(slot.assignedGames)
+                        assigned_games = assigned_games + 1
                     elif isinstance(slot, PracticeSlot):
-                        assigned_practices = assigned_practices + len(slot.assignedPractices)
+                        assigned_practices = assigned_practices + 1
 
             if isinstance(parent_slot, GameSlot):
                 if assigned_games < parent_slot.gameMin:
