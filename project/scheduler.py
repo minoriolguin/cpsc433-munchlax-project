@@ -9,6 +9,7 @@ from game import Game
 from practice import Practice
 from practiceSlot import PracticeSlot
 from gameSlot import GameSlot
+from input_parser import InputParser
 
 class Scheduler:
     def __init__(self, events=None):
@@ -34,12 +35,20 @@ class Scheduler:
     def get_schedule(self):
         return self.scheduleVersion
 
-    def calculate_eval_value(self):
+    # **ASSUMPTION**: the eval_value still gets calculated for a game slot or practice slot EVEN IF there are not enough games or practices that could be assigned to each game slot or practice slot to satisfy the gamemin or practicemin in the first place
+    def calculate_eval_value(self, pen_gamemin, pen_practicemin):
         eval_value = 0
+
+        for slot, event in self.scheduleVersion.items():
+            if isinstance(slot, GameSlot):
+                eval_value += (slot.gameMin - len(slot.assignedGames)) * pen_gamemin
+            elif isinstance(slot, PracticeSlot):
+                eval_value += slot.pracMin - len(slot.assignedPractices) * pen_practicemin
+
         return eval_value
 
-    def print_schedule(self):
-        eval_value = self.calculate_eval_value()
+    def print_schedule(self, pen_gamemin, pen_practicemin):
+        eval_value = self.calculate_eval_value(pen_gamemin, pen_practicemin)
         print(f"\033[1mEval-value:\033[0m {eval_value}")
 
         id_width = 30
