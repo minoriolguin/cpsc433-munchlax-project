@@ -210,7 +210,8 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, s
     else:
         # Partial schedule
         current_eval_score = node.schedule.calculate_eval_value(parent_slots, softConstraints)
-        if not best_schedule_is_complete and current_eval_score < best_eval_score:
+        # if not best_schedule_is_complete and current_eval_score < best_eval_score:
+        if not best_schedule_is_complete:
             best_eval_score = current_eval_score
             best_schedule = node.schedule.copy_schedule()
 
