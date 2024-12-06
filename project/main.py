@@ -23,15 +23,17 @@ from softContraints import SoftConstraints
 best_schedule = None
 best_eval_score = float('inf')
 slots = []
-pen_gamemin = None
-pen_practicemin = None
 checked_states = set()
 best_schedule_is_complete = False
 MAX_DEPTH = 100
 
 # Signal handler to handle early stops
 def signal_handler(sig, frame):
-    global best_schedule, best_eval_score, slots, softConstraints, best_schedule_is_complete
+    global best_schedule, best_eval_score, slots, best_schedule_is_complete
+
+    parser = InputParser()
+    parser.main()
+    softConstraints = SoftConstraints(parser)
     if best_schedule:
         status = "Complete" if best_schedule_is_complete else "Partial"
         print(f"\n*Best Schedule Found ({status} - Interrupted): ")
@@ -142,7 +144,7 @@ def reorder_events(events):
 
     return reordered_events
 
-  
+
 def prioritize_slots(event, slots, incompatible_map):
     if isinstance(event, Game):
         valid_slots = [slot for slot in slots if isinstance(slot, GameSlot)]
