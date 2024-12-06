@@ -40,8 +40,11 @@ Run the program with the input file and desired constraints:
 ```bash
 python3 main.py <input_file> 1 1 1 1 1 1 1 1
 ```
-The numbers following the input file are in the following order:
-wminfilled wpref wpair wsecdiff pengamemin penpracticemin pennotpaired pensection
+
+ <p>
+  The numbers following the input file are in the following order:
+  wminfilled wpref wpair wsecdiff pengamemin penpracticemin pennotpaired pensection 
+ </p>
 ---
 ## Required libraries: 
 - collections
