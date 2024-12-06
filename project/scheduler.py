@@ -27,35 +27,14 @@ class Scheduler:
             slot.assignedPractices.append(event)
         self.scheduleVersion[slot] = event
 
-    def remove_event(self, slot):
-        if slot in self.scheduleVersion:
-            self.scheduleVersion[slot] = "$"
+    # def remove_event(self, slot):
+    #     if slot in self.scheduleVersion:
+    #         self.scheduleVersion[slot] = "$"
 
     def get_schedule(self):
         return self.scheduleVersion
 
-    def calculate_eval_value(self, parent_slots, softConstraints):
-        minimum_slot_usage_penalty = softConstraints.check_minimum_slot_usage(self, parent_slots)
-        #print(f"Minimum Slot Usage Penalty: {minimum_slot_usage_penalty}")
-
-        preferred_slot_usage_penalty = softConstraints.check_preferred_time_slots(self)
-        #print(f"Preferred Slot Usage Penalty: {preferred_slot_usage_penalty}")
-
-        paired_events_penalty = softConstraints.check_paired_events(self)
-        #print(f"Paired Events Penalty: {paired_events_penalty}")
-
-        overloading_penalty = softConstraints.check_avoid_overloading_divisions(self)
-        #print(f"Overloading Penalty: {overloading_penalty}")
-
-        spread_of_events_penalty = softConstraints.check_spread_of_events(self)
-        #print(f"Spread of Events Penalty: {spread_of_events_penalty}")
-
-        eval_value = minimum_slot_usage_penalty + preferred_slot_usage_penalty + paired_events_penalty + overloading_penalty + spread_of_events_penalty
-
-        return eval_value
-
-    def print_schedule(self, parent_slots, softConstraints):
-        eval_value = self.calculate_eval_value(parent_slots, softConstraints)
+    def print_schedule(self, eval_value):
         print(f"\033[1mEval-value:\033[0m {eval_value}")
 
         id_width = 30

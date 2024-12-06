@@ -27,11 +27,11 @@ class InputParser:
         self.partial_assign = []
         self.filename = ''
         self.w_minfilled = 0
-        self.w_pre = 0
+        self.w_pref = 0
         self.w_pair = 0
         self.w_secdiff = 0
-        self.pengamemin = 0
-        self.penpracticemin = 0
+        self.pen_gamemin = 0
+        self.pen_practicemin = 0
         self.pen_notpaired = 0
         self.pen_section = 0
 
@@ -45,14 +45,14 @@ class InputParser:
         # Assumption: all weights and penalties are integers (unsure as not specified in the problem)
         try:
             self.filename = sys.argv[1]
-            self.wminfilled = int(sys.argv[2])
-            self.wpref = int(sys.argv[3])
-            self.wpair = int(sys.argv[4])
-            self.wsecdiff = int(sys.argv[5])
-            self.pengamemin = int(sys.argv[6])
-            self.penpracticemin = int(sys.argv[7])
-            self.pennotpaired = int(sys.argv[8])
-            self.pensection = int(sys.argv[9])
+            self.w_minfilled = int(sys.argv[2])
+            self.w_pref = int(sys.argv[3])
+            self.w_pair = int(sys.argv[4])
+            self.w_secdiff = int(sys.argv[5])
+            self.pen_gamemin = int(sys.argv[6])
+            self.pen_practicemin = int(sys.argv[7])
+            self.pen_notpaired = int(sys.argv[8])
+            self.pen_section = int(sys.argv[9])
         except ValueError:
             print("Error: weights and penalties must be integers")
 

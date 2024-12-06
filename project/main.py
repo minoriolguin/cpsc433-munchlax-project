@@ -8,6 +8,7 @@
 import signal
 import sys
 import time
+import traceback
 from game import Game
 from practice import Practice
 from gameSlot import GameSlot
@@ -17,14 +18,15 @@ from scheduler import Scheduler
 from node import Node
 from collections import defaultdict
 from hardConstraints import HardConstraints
-from softContraints import SoftConstraints
+from softConstraints import SoftConstraints
 
 # Global variables
+softConstraints = None
 best_schedule = None
 best_eval_score = float('inf')
+best_schedule_is_complete = False
 slots = []
 checked_states = set()
-best_schedule_is_complete = False
 MAX_DEPTH = 100
 
 # Signal handler to handle early stops
@@ -33,11 +35,10 @@ def signal_handler(sig, frame):
 
     parser = InputParser()
     parser.main()
-    softConstraints = SoftConstraints(parser)
     if best_schedule:
         status = "Complete" if best_schedule_is_complete else "Partial"
         print(f"\n*Best Schedule Found ({status} - Interrupted): ")
-        best_schedule.print_schedule(slots, softConstraints)
+        best_schedule.print_schedule(slots, softConstraints.eval())
     else:
         print("No valid schedule found.")
     sys.exit(0)
@@ -144,7 +145,8 @@ def reorder_events(events):
 
     return reordered_events
 
-
+# Div function: enables the program to decide which slot to fill next based on 
+# the given constraints and open slots available
 def prioritize_slots(event, slots, incompatible_map):
     if isinstance(event, Game):
         valid_slots = [slot for slot in slots if isinstance(slot, GameSlot)]
@@ -189,28 +191,35 @@ def preprocess_incompatible_pairs(not_compatible):
     return incompatible_map
 
 # And-Tree build
-def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, softConstraints, incompatible_map, depth=0):
+def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, eval, incompatible_map, depth=0):
     global best_schedule, best_eval_score, best_schedule_is_complete
-    #print(f"DEBUG: Building tree at depth {depth}, unscheduled_events={len(unscheduled_events)}")
+    # print(f"DEBUG: Building tree at depth {depth}, unscheduled_events={len(unscheduled_events)}")
     # print(f"current depth: {depth}")
     if depth > MAX_DEPTH:
         # print("Max depth reached, terminating this branch.")
         return
 
+    current_eval_score = eval(node.schedule)
+    
     # Base case: All events scheduled
     if not unscheduled_events:
         # Complete schedule
-        eval_score = node.schedule.calculate_eval_value(parent_slots, softConstraints)
+        print(f"DEBUG: current eval score {current_eval_score}")
+        print(f"DEBUG: best schedule complete? {best_schedule_is_complete}")
         if check_hard_constraints(node.schedule):
             node.sol = "yes"
-            if not best_schedule_is_complete or eval_score < best_eval_score:
-                best_eval_score = eval_score
+            if not best_schedule_is_complete or current_eval_score < best_eval_score:
+                best_eval_score = current_eval_score
                 best_schedule = node.schedule.copy_schedule()
                 best_schedule_is_complete = True
     else:
         # Partial schedule
-        current_eval_score = node.schedule.calculate_eval_value(parent_slots, softConstraints)
+        # print(f"DEBUG: in unscheduled else")
+        # print(f"DEBUG: Best eval score is {best_eval_score}")
         if not best_schedule_is_complete and current_eval_score < best_eval_score:
+        # if not best_schedule_is_complete:
+            
+            # print(f"DEBUG: Saving best partial...")
             best_eval_score = current_eval_score
             best_schedule = node.schedule.copy_schedule()
 
@@ -261,7 +270,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, s
 
             # Continue recursion with remaining events
             remaining_events = [e for e in unscheduled_events if e != event]
-            build_tree(child_node, remaining_events, child_slots, check_hard_constraints, softConstraints, incompatible_map, depth + 1)
+            build_tree(child_node, remaining_events, child_slots, check_hard_constraints, eval, incompatible_map, depth + 1)
 
 
 # Main method
@@ -274,7 +283,7 @@ def main():
     practice_slots = parser.practiceSlots
     partial_assign = parser.partial_assign
     incompatible_map = preprocess_incompatible_pairs(parser.not_compatible)
-
+    
     try:
         root = initialize_root(events, game_slots, practice_slots, partial_assign)
     except ValueError as e:
@@ -286,16 +295,24 @@ def main():
 
     hardConstraints = HardConstraints(parser)
     softConstraints = SoftConstraints(parser)
-
+    
     try:
         start = time.time()
-        build_tree(root, unscheduled_events, slots, hardConstraints.check_hard_constraints, softConstraints, incompatible_map)
+        build_tree(
+            root, 
+            unscheduled_events, 
+            slots, 
+            hardConstraints.check_hard_constraints, 
+            softConstraints.eval, 
+            incompatible_map
+            )
         end = time.time()
     except Exception as e:
         print(f"An error occurred: {e}")
+        print(traceback.format_exc())
         if best_schedule:
             print("\nBest schedule found before error: \n")
-            best_schedule.print_schedule(slots, softConstraints)
+            best_schedule.print_schedule(softConstraints.eval(best_schedule))
         else:
             print("No valid schedule found before error.")
         return
@@ -305,7 +322,7 @@ def main():
 
     if best_schedule:
         print("\nBest schedule found: \n")
-        best_schedule.print_schedule(slots, softConstraints)
+        best_schedule.print_schedule(softConstraints.eval(best_schedule))
     else:
         print("No valid schedule found.")
 

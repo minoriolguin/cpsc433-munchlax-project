@@ -80,16 +80,16 @@ class HardConstraints:
         return False
 
     def notcompatible(self, schedule):
-        for incompatable_pair in self.input_parser.not_compatible:
+        for incompatible_pair in self.input_parser.not_compatible:
 
             # find slot for event 1
             event1_slot = None
             event2_slot = None
             for slot, event in schedule.scheduleVersion.items():
                 if event != "$":
-                    if event.id == incompatable_pair[0]:
+                    if event.id == incompatible_pair[0]:
                         event1_slot = slot
-                    elif event.id == incompatable_pair[1]:
+                    elif event.id == incompatible_pair[1]:
                         event2_slot = slot
 
             if event1_slot is not None and event2_slot is not None:
@@ -122,7 +122,7 @@ class HardConstraints:
                     if d1 == "MO":
                         end1 = start1 + 1
                     elif d1 == "TU":
-                        if is_game(incompatable_pair[0]):
+                        if is_game(incompatible_pair[0]):
                             end1 = start1 + 1.5
                         else:
                             end1 = start1 + 2
@@ -132,7 +132,7 @@ class HardConstraints:
                     if d1 == "MO":
                         end2 = start2 + 1
                     elif d1 == "TU":
-                        if is_game(incompatable_pair[1]):
+                        if is_game(incompatible_pair[1]):
                             end2 = start2 + 1.5
                         else:
                             end2 = start2 + 2
