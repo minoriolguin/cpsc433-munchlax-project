@@ -7,6 +7,7 @@
 
 import signal
 import sys
+import time
 from game import Game
 from practice import Practice
 from gameSlot import GameSlot
@@ -21,6 +22,7 @@ from softContraints import SoftConstraints
 # Global variables
 best_schedule = None
 best_eval_score = float('inf')
+slots = []
 pen_gamemin = None
 pen_practicemin = None
 checked_states = set()
@@ -62,13 +64,13 @@ def initialize_root(events, game_slots, practice_slots, partial_assign):
                                           if slot.day == "TU" and slot.startTime == "18:00"), None)
 
             if not special_practice_slot:
-                print(f"Failed to find valid slot for special practice {special_practice_id}.")
+                # print(f"Failed to find valid slot for special practice {special_practice_id}.")
                 return None
 
             special_practice = next(
                 (e for e in events if e.id == special_practice_id), None)
             if not special_practice:
-                print(f"Special practice {special_practice_id} not found in events.")
+                # print(f"Special practice {special_practice_id} not found in events.")
                 return None
 
             root_schedule.assign_event(special_practice, special_practice_slot)
@@ -77,7 +79,7 @@ def initialize_root(events, game_slots, practice_slots, partial_assign):
     # assigns any partial assignments for the schedule
     for assign in partial_assign:
         if 'id' not in assign or 'day' not in assign or 'time' not in assign:
-            print(f"Invalid partial assignment format: {assign}")
+            # print(f"Invalid partial assignment format: {assign}")
             return None
 
         event_id = assign['id']
@@ -86,13 +88,13 @@ def initialize_root(events, game_slots, practice_slots, partial_assign):
 
         event = next((e for e in events if e.id == event_id), None)
         if not event:
-            print(f"Event with ID '{event_id}' not found in events.")
+            # print(f"Event with ID '{event_id}' not found in events.")
             return None
 
         slot = next((s for s in filtered_game_slots + practice_slots
                      if s.day == day and s.startTime == time), None)
         if not slot:
-            print(f"Slot with day '{day}' and time '{time}' not found.")
+            # print(f"Slot with day '{day}' and time '{time}' not found.")
             return None
 
         root_schedule.assign_event(event, slot)
@@ -169,7 +171,8 @@ def prioritize_slots(event, slots, incompatible_map):
         key=lambda slot: (
             event.div != 9,  # False for div 9 (higher priority)
             int(slot.startTime.split(':')[0]) < 18,  # True if start time < 18
-            -slot.remaining_capacity()  # Higher capacity first
+            -slot.remaining_capacity(),  # Higher capacity first
+            not meets_game_min(slot)  # Prioritize slots that help meet game_min
         )
     )
     #print(f"DEBUG: Prioritized slots: {[slot.id for slot in prioritized]}")
@@ -221,7 +224,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, s
     # print(f"events remaining: {len(ordered_events)}")
 
     for event in ordered_events:
-        prioritized_slots = prioritize_slots(event, parent_slots)
+        prioritized_slots = prioritize_slots(event, parent_slots, incompatible_map)
         #print(f"DEBUG: Event {event.id} has prioritized slots: {[slot.id for slot in prioritized_slots]}")
         for slot in prioritized_slots:
             # Skip incompatible slot types
