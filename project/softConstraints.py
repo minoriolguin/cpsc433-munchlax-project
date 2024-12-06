@@ -72,7 +72,7 @@ class SoftConstraints:
             event2_slot = None
 
             # Find the slots assigned to each event in the pair
-            for slot, event in schedule.scheduleVersion:
+            for slot, event in schedule.scheduleVersion.items():
                 if event != "$":
                     if event.id == event1_id:
                         event1_slot = slot

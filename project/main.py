@@ -38,7 +38,7 @@ def signal_handler(sig, frame):
     if best_schedule:
         status = "Complete" if best_schedule_is_complete else "Partial"
         print(f"\n*Best Schedule Found ({status} - Interrupted): ")
-        best_schedule.print_schedule(slots, softConstraints.eval())
+        best_schedule.print_schedule(best_eval_score)
     else:
         print("No valid schedule found.")
     sys.exit(0)
@@ -297,7 +297,7 @@ def main():
     softConstraints = SoftConstraints(parser)
     
     try:
-        start = time.time()
+        # start = time.time()
         build_tree(
             root, 
             unscheduled_events, 
@@ -306,7 +306,7 @@ def main():
             softConstraints.eval, 
             incompatible_map
             )
-        end = time.time()
+        # end = time.time()
     except Exception as e:
         print(f"An error occurred: {e}")
         print(traceback.format_exc())
@@ -317,8 +317,8 @@ def main():
             print("No valid schedule found before error.")
         return
 
-    elapsed_time_minutes = (end - start) / 60
-    print(f"Time to run: {elapsed_time_minutes}")
+    # elapsed_time_minutes = (end - start) / 60
+    # print(f"Time to run: {elapsed_time_minutes}")
 
     if best_schedule:
         print("\nBest schedule found: \n")
