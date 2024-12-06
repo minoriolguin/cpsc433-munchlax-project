@@ -138,10 +138,10 @@ def reorder_events(events):
         for key in grouped:
             if key[0] == league and key[1] == tier:
                 reordered_events.extend(add_team_events(key))
-                
+
     return reordered_events
 
-  
+
 def prioritize_slots(event, slots, incompatible_map):
     if isinstance(event, Game):
         valid_slots = [slot for slot in slots if isinstance(slot, GameSlot)]
@@ -153,7 +153,7 @@ def prioritize_slots(event, slots, incompatible_map):
     # Filter out incompatible slots
     valid_slots = [
         slot for slot in valid_slots
-        if not (hasattr(slot, 'assigned_event') and slot.assigned_event and 
+        if not (hasattr(slot, 'assigned_event') and slot.assigned_event and
                 slot.assigned_event.id in incompatible_map.get(event.id, set()))
     ]
 
@@ -163,7 +163,7 @@ def prioritize_slots(event, slots, incompatible_map):
             return slot.remaining_capacity() >= slot.gameMin
         if isinstance(slot, PracticeSlot):
             return slot.remaining_capacity() >= slot.pracMin
-        return True 
+        return True
 
     prioritized = sorted(
         valid_slots,
@@ -263,7 +263,7 @@ def main():
     practice_slots = parser.practiceSlots
     partial_assign = parser.partial_assign
     incompatible_map = preprocess_incompatible_pairs(parser.not_compatible)
-    
+
     try:
         root = initialize_root(events, game_slots, practice_slots, partial_assign)
     except ValueError as e:
@@ -272,13 +272,13 @@ def main():
 
     unscheduled_events = [event for event in events if not any(assign['id'] == event.id for assign in partial_assign)]
     slots = game_slots + practice_slots
-    
+
     hardConstraints = HardConstraints(parser)
     softConstraints = SoftConstraints(parser)
 
     try:
         start = time.time()
-        build_tree(root, unscheduled_events, slots, hardConstraints.check_hard_constraints, pen_gamemin, pen_practicemin, incompatible_map)
+        build_tree(root, unscheduled_events, slots, hardConstraints.check_hard_constraints, softConstraints, incompatible_map)
         end = time.time()
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -287,7 +287,7 @@ def main():
             best_schedule.print_schedule(slots, softConstraints)
         else:
             print("No valid schedule found before error.")
-        return 
+        return
 
     elapsed_time_minutes = (end - start) / 60
     print(f"Time to run: {elapsed_time_minutes}")
