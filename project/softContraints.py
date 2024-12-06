@@ -9,7 +9,7 @@ class SoftConstraints:
         self.input_parser = input_parser
 
     def check_minimum_slot_usage(self, schedule, parent_slots, pen_gamemin, pen_practicemin):
-        eval_value = 0
+        penalty = 0
 
         sorted_schedule = sorted(
             [(event, slot) for slot, event in schedule.scheduleVersion.items() if event != "$"],
@@ -28,12 +28,12 @@ class SoftConstraints:
 
             if isinstance(parent_slot, GameSlot):
                 if assigned_games < parent_slot.gameMin:
-                    eval_value = eval_value + (parent_slot.gameMin - assigned_games) * pen_gamemin
+                    penalty = penalty + (parent_slot.gameMin - assigned_games) * pen_gamemin
             elif isinstance(parent_slot, PracticeSlot):
                 if assigned_practices < parent_slot.pracMin:
-                    eval_value = eval_value + (parent_slot.pracMin - assigned_practices) * pen_practicemin
+                    penalty = penalty + (parent_slot.pracMin - assigned_practices) * pen_practicemin
 
-        return eval_value
+        return penalty
 
     def is_same_slot(self, slot1, slot2):
         return isinstance(slot1, type(slot2)) and slot1.day == slot2.day and slot1.startTime == slot2.startTime
