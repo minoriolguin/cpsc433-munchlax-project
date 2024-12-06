@@ -7,7 +7,6 @@
 
 import signal
 import sys
-import time
 from game import Game
 from practice import Practice
 from gameSlot import GameSlot
@@ -22,12 +21,11 @@ from softContraints import SoftConstraints
 # Global variables
 best_schedule = None
 best_eval_score = float('inf')
-slots = []
 pen_gamemin = None
 pen_practicemin = None
 checked_states = set()
 best_schedule_is_complete = False
-MAX_DEPTH = 200
+MAX_DEPTH = 100
 
 # Signal handler to handle early stops
 def signal_handler(sig, frame):
@@ -64,13 +62,13 @@ def initialize_root(events, game_slots, practice_slots, partial_assign):
                                           if slot.day == "TU" and slot.startTime == "18:00"), None)
 
             if not special_practice_slot:
-                # print(f"Failed to find valid slot for special practice {special_practice_id}.")
+                print(f"Failed to find valid slot for special practice {special_practice_id}.")
                 return None
 
             special_practice = next(
                 (e for e in events if e.id == special_practice_id), None)
             if not special_practice:
-                # print(f"Special practice {special_practice_id} not found in events.")
+                print(f"Special practice {special_practice_id} not found in events.")
                 return None
 
             root_schedule.assign_event(special_practice, special_practice_slot)
@@ -79,7 +77,7 @@ def initialize_root(events, game_slots, practice_slots, partial_assign):
     # assigns any partial assignments for the schedule
     for assign in partial_assign:
         if 'id' not in assign or 'day' not in assign or 'time' not in assign:
-            # print(f"Invalid partial assignment format: {assign}")
+            print(f"Invalid partial assignment format: {assign}")
             return None
 
         event_id = assign['id']
@@ -88,12 +86,13 @@ def initialize_root(events, game_slots, practice_slots, partial_assign):
 
         event = next((e for e in events if e.id == event_id), None)
         if not event:
-            # print(f"Event with ID '{event_id}' not found in events.")
+            print(f"Event with ID '{event_id}' not found in events.")
             return None
 
         slot = next((s for s in filtered_game_slots + practice_slots
                      if s.day == day and s.startTime == time), None)
         if not slot:
+            print(f"Slot with day '{day}' and time '{time}' not found.")
             return None
 
         root_schedule.assign_event(event, slot)
@@ -138,11 +137,12 @@ def reorder_events(events):
         for key in grouped:
             if key[0] == league and key[1] == tier:
                 reordered_events.extend(add_team_events(key))
-                
+
     return reordered_events
 
-  
-def prioritize_slots(event, slots, incompatible_map):
+def prioritize_slots(event, slots):
+    # Debug slot filtering and prioritization
+    #print(f"DEBUG: Prioritizing slots for event {event.id}")
     if isinstance(event, Game):
         valid_slots = [slot for slot in slots if isinstance(slot, GameSlot)]
     elif isinstance(event, Practice):
@@ -150,33 +150,18 @@ def prioritize_slots(event, slots, incompatible_map):
     else:
         return []
 
-    # Filter out incompatible slots
-    valid_slots = [
-        slot for slot in valid_slots
-        if not (hasattr(slot, 'assigned_event') and slot.assigned_event and 
-                slot.assigned_event.id in incompatible_map.get(event.id, set()))
-    ]
-
-    # Calculate whether the slot meets the game_min constraint
-    def meets_game_min(slot):
-        if isinstance(slot, GameSlot):
-            return slot.remaining_capacity() >= slot.gameMin
-        if isinstance(slot, PracticeSlot):
-            return slot.remaining_capacity() >= slot.pracMin
-        return True 
-
     prioritized = sorted(
         valid_slots,
         key=lambda slot: (
             event.div != 9,  # False for div 9 (higher priority)
             int(slot.startTime.split(':')[0]) < 18,  # True if start time < 18
-            -slot.remaining_capacity(),  # Higher capacity first
-            not meets_game_min(slot)  # Prioritize slots that help meet game_min
+            -slot.remaining_capacity()  # Higher capacity first
         )
     )
+    #print(f"DEBUG: Prioritized slots: {[slot.id for slot in prioritized]}")
     return prioritized
 
-# Keep a map of incompatible pairs to use during prioritization
+
 def preprocess_incompatible_pairs(not_compatible):
     incompatible_map = defaultdict(set)
     for pair in not_compatible:
@@ -187,8 +172,10 @@ def preprocess_incompatible_pairs(not_compatible):
 # And-Tree build
 def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, softConstraints, incompatible_map, depth=0):
     global best_schedule, best_eval_score, best_schedule_is_complete
-
+    #print(f"DEBUG: Building tree at depth {depth}, unscheduled_events={len(unscheduled_events)}")
+    # print(f"current depth: {depth}")
     if depth > MAX_DEPTH:
+        # print("Max depth reached, terminating this branch.")
         return
 
     # Base case: All events scheduled
@@ -209,24 +196,27 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, s
             best_schedule = node.schedule.copy_schedule()
 
     # Check for already-visited states
-    state_hash = hash(frozenset((slot.id, event.id) for slot, event in node.schedule.scheduleVersion.items() if event != "$"))
+    state_hash = hash(frozenset(node.schedule.scheduleVersion.items()))
     if state_hash in checked_states:
+        # print(f"Skipping already-checked state at depth {depth}.")
         return
     checked_states.add(state_hash)
 
     # Reorder events and maintain the order as a flat list
     ordered_events = reorder_events(unscheduled_events)
+    # print(f"events remaining: {len(ordered_events)}")
 
     for event in ordered_events:
-        prioritized_slots = prioritize_slots(event, parent_slots, incompatible_map)
-
+        prioritized_slots = prioritize_slots(event, parent_slots)
+        #print(f"DEBUG: Event {event.id} has prioritized slots: {[slot.id for slot in prioritized_slots]}")
         for slot in prioritized_slots:
             # Skip incompatible slot types
             if isinstance(event, Game) and not isinstance(slot, GameSlot):
                 continue
             if isinstance(event, Practice) and not isinstance(slot, PracticeSlot):
                 continue
-
+            if hasattr(slot, 'assigned_event') and slot.assigned_event and slot.assigned_event.id in incompatible_map.get(event.id, set()):
+                continue
             # Skip full slots
             if slot.is_full():
                 continue
@@ -238,6 +228,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, s
 
             # Check the new schedule with hard constraints
             if not check_hard_constraints(new_schedule):
+                #print(f"DEBUG: Hard constraints failed for event {event.id} in slot {slot.id}")
                 continue
 
             # Create a new child node if valid
@@ -246,6 +237,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, s
 
             # Prune branches with no children
             if not node.children:
+                # print(f"Pruning branch at depth {depth}, no children.")
                 return
 
             # Continue recursion with remaining events
@@ -263,7 +255,7 @@ def main():
     practice_slots = parser.practiceSlots
     partial_assign = parser.partial_assign
     incompatible_map = preprocess_incompatible_pairs(parser.not_compatible)
-    
+
     try:
         root = initialize_root(events, game_slots, practice_slots, partial_assign)
     except ValueError as e:
@@ -272,14 +264,12 @@ def main():
 
     unscheduled_events = [event for event in events if not any(assign['id'] == event.id for assign in partial_assign)]
     slots = game_slots + practice_slots
-    
+
     hardConstraints = HardConstraints(parser)
     softConstraints = SoftConstraints(parser)
 
     try:
-        start = time.time()
-        build_tree(root, unscheduled_events, slots, hardConstraints.check_hard_constraints, pen_gamemin, pen_practicemin, incompatible_map)
-        end = time.time()
+        build_tree(root, unscheduled_events, slots, hardConstraints.check_hard_constraints, softConstraints, incompatible_map)
     except Exception as e:
         print(f"An error occurred: {e}")
         if best_schedule:
@@ -287,10 +277,7 @@ def main():
             best_schedule.print_schedule(slots, softConstraints)
         else:
             print("No valid schedule found before error.")
-        return 
-
-    elapsed_time_minutes = (end - start) / 60
-    print(f"Time to run: {elapsed_time_minutes}")
+        return
 
     if best_schedule:
         print("\nBest schedule found: \n")
