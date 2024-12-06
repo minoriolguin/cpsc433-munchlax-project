@@ -140,15 +140,29 @@ def reorder_events(events):
 
     return reordered_events
 
-def prioritize_slots(event, slots):
-    # Debug slot filtering and prioritization
-    #print(f"DEBUG: Prioritizing slots for event {event.id}")
+  
+def prioritize_slots(event, slots, incompatible_map):
     if isinstance(event, Game):
         valid_slots = [slot for slot in slots if isinstance(slot, GameSlot)]
     elif isinstance(event, Practice):
         valid_slots = [slot for slot in slots if isinstance(slot, PracticeSlot)]
     else:
         return []
+
+    # Filter out incompatible slots
+    valid_slots = [
+        slot for slot in valid_slots
+        if not (hasattr(slot, 'assigned_event') and slot.assigned_event and
+                slot.assigned_event.id in incompatible_map.get(event.id, set()))
+    ]
+
+    # Calculate whether the slot meets the game_min constraint
+    def meets_game_min(slot):
+        if isinstance(slot, GameSlot):
+            return slot.remaining_capacity() >= slot.gameMin
+        if isinstance(slot, PracticeSlot):
+            return slot.remaining_capacity() >= slot.pracMin
+        return True
 
     prioritized = sorted(
         valid_slots,
@@ -269,7 +283,9 @@ def main():
     softConstraints = SoftConstraints(parser)
 
     try:
+        start = time.time()
         build_tree(root, unscheduled_events, slots, hardConstraints.check_hard_constraints, softConstraints, incompatible_map)
+        end = time.time()
     except Exception as e:
         print(f"An error occurred: {e}")
         if best_schedule:
@@ -278,6 +294,9 @@ def main():
         else:
             print("No valid schedule found before error.")
         return
+
+    elapsed_time_minutes = (end - start) / 60
+    print(f"Time to run: {elapsed_time_minutes}")
 
     if best_schedule:
         print("\nBest schedule found: \n")
