@@ -29,11 +29,11 @@ MAX_DEPTH = 100
 
 # Signal handler to handle early stops
 def signal_handler(sig, frame):
-    global best_schedule, best_eval_score, slots, pen_gamemin, pen_practicemin, best_schedule_is_complete
+    global best_schedule, best_eval_score, slots, softConstraints, best_schedule_is_complete
     if best_schedule:
         status = "Complete" if best_schedule_is_complete else "Partial"
         print(f"\n*Best Schedule Found ({status} - Interrupted): ")
-        best_schedule.print_schedule(slots, pen_gamemin, pen_practicemin)
+        best_schedule.print_schedule(slots, softConstraints)
     else:
         print("No valid schedule found.")
     sys.exit(0)
