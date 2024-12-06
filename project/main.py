@@ -21,6 +21,7 @@ from softContraints import SoftConstraints
 # Global variables
 best_schedule = None
 best_eval_score = float('inf')
+slots = None
 pen_gamemin = None
 pen_practicemin = None
 checked_states = set()
