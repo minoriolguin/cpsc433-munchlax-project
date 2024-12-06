@@ -216,8 +216,8 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, e
         # Partial schedule
         # print(f"DEBUG: in unscheduled else")
         # print(f"DEBUG: Best eval score is {best_eval_score}")
-        if not best_schedule_is_complete and current_eval_score < best_eval_score:
-        # if not best_schedule_is_complete:
+        # if not best_schedule_is_complete and current_eval_score < best_eval_score:
+        if not best_schedule_is_complete:
             
             # print(f"DEBUG: Saving best partial...")
             best_eval_score = current_eval_score

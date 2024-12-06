@@ -129,9 +129,9 @@ class HardConstraints:
                     else:
                         end1 = start1 + 2
 
-                    if d1 == "MO":
+                    if d2 == "MO":
                         end2 = start2 + 1
-                    elif d1 == "TU":
+                    elif d2 == "TU":
                         if is_game(incompatible_pair[1]):
                             end2 = start2 + 1.5
                         else:
