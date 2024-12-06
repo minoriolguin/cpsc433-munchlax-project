@@ -29,13 +29,13 @@ checked_states = set()
 best_schedule_is_complete = False
 MAX_DEPTH = 200
 
-# Signal handler to handle early stops 
+# Signal handler to handle early stops
 def signal_handler(sig, frame):
-    global best_schedule, best_eval_score, slots, pen_gamemin, pen_practicemin, best_schedule_is_complete
+    global best_schedule, best_eval_score, slots, softConstraints, best_schedule_is_complete
     if best_schedule:
         status = "Complete" if best_schedule_is_complete else "Partial"
         print(f"\n*Best Schedule Found ({status} - Interrupted): ")
-        best_schedule.print_schedule(slots, pen_gamemin, pen_practicemin)
+        best_schedule.print_schedule(slots, softConstraints)
     else:
         print("No valid schedule found.")
     sys.exit(0)
@@ -100,7 +100,7 @@ def initialize_root(events, game_slots, practice_slots, partial_assign):
 
     return Node(schedule=root_schedule, sol="?")
 
-# Helper function to sort the events so they aren't random, this also prioritizes the 
+# Helper function to sort the events so they aren't random, this also prioritizes the
 # evening slots and divisions starting with 9 so they can be places in evening slots first
 def reorder_events(events):
     # Group events by league, tier, and division
@@ -141,6 +141,7 @@ def reorder_events(events):
                 
     return reordered_events
 
+  
 def prioritize_slots(event, slots, incompatible_map):
     if isinstance(event, Game):
         valid_slots = [slot for slot in slots if isinstance(slot, GameSlot)]
@@ -184,7 +185,7 @@ def preprocess_incompatible_pairs(not_compatible):
     return incompatible_map
 
 # And-Tree build
-def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, pen_gamemin, pen_practicemin, incompatible_map, depth=0):
+def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, softConstraints, incompatible_map, depth=0):
     global best_schedule, best_eval_score, best_schedule_is_complete
 
     if depth > MAX_DEPTH:
@@ -193,7 +194,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, p
     # Base case: All events scheduled
     if not unscheduled_events:
         # Complete schedule
-        eval_score = node.schedule.calculate_eval_value(parent_slots, pen_gamemin, pen_practicemin)
+        eval_score = node.schedule.calculate_eval_value(parent_slots, softConstraints)
         if check_hard_constraints(node.schedule):
             node.sol = "yes"
             if not best_schedule_is_complete or eval_score < best_eval_score:
@@ -202,7 +203,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, p
                 best_schedule_is_complete = True
     else:
         # Partial schedule
-        current_eval_score = node.schedule.calculate_eval_value(parent_slots, pen_gamemin, pen_practicemin)
+        current_eval_score = node.schedule.calculate_eval_value(parent_slots, softConstraints)
         if not best_schedule_is_complete and current_eval_score < best_eval_score:
             best_eval_score = current_eval_score
             best_schedule = node.schedule.copy_schedule()
@@ -218,6 +219,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, p
 
     for event in ordered_events:
         prioritized_slots = prioritize_slots(event, parent_slots, incompatible_map)
+
         for slot in prioritized_slots:
             # Skip incompatible slot types
             if isinstance(event, Game) and not isinstance(slot, GameSlot):
@@ -248,7 +250,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, p
 
             # Continue recursion with remaining events
             remaining_events = [e for e in unscheduled_events if e != event]
-            build_tree(child_node, remaining_events, child_slots, check_hard_constraints, pen_gamemin, pen_practicemin, incompatible_map, depth + 1)
+            build_tree(child_node, remaining_events, child_slots, check_hard_constraints, softConstraints, incompatible_map, depth + 1)
 
 
 # Main method
@@ -260,8 +262,6 @@ def main():
     game_slots = parser.gameSlots
     practice_slots = parser.practiceSlots
     partial_assign = parser.partial_assign
-    pen_gamemin = parser.pengamemin
-    pen_practicemin = parser.penpracticemin
     incompatible_map = preprocess_incompatible_pairs(parser.not_compatible)
     
     try:
@@ -275,7 +275,7 @@ def main():
     
     hardConstraints = HardConstraints(parser)
     softConstraints = SoftConstraints(parser)
-        
+
     try:
         start = time.time()
         build_tree(root, unscheduled_events, slots, hardConstraints.check_hard_constraints, pen_gamemin, pen_practicemin, incompatible_map)
@@ -284,7 +284,7 @@ def main():
         print(f"An error occurred: {e}")
         if best_schedule:
             print("\nBest schedule found before error: \n")
-            best_schedule.print_schedule(slots, pen_gamemin, pen_practicemin)
+            best_schedule.print_schedule(slots, softConstraints)
         else:
             print("No valid schedule found before error.")
         return 
@@ -294,23 +294,9 @@ def main():
 
     if best_schedule:
         print("\nBest schedule found: \n")
-        best_schedule.print_schedule(slots, pen_gamemin, pen_practicemin)
+        best_schedule.print_schedule(slots, softConstraints)
     else:
         print("No valid schedule found.")
-    
-    # Calculate penalties for soft constraints 
-    # schedule = root.schedule  # Assuming the root has the final schedule
-    # soft_penalty_1 = softConstraints.check_minimum_slot_usage(schedule)  
-    # soft_penalty_2 = softConstraints.check_preferred_time_slots(schedule) 
-    # soft_penalty_3 = softConstraints.check_paired_events(schedule)  
-    # soft_penalty_4 = softConstraints.check_avoid_overloading_divisions(schedule)  
-    # soft_penalty_5 = softConstraints.check_spread_of_events(schedule)  
-
-    # Calculate total penalty and display it 
-    # total_soft_penalty = (
-    #     soft_penalty_1 + soft_penalty_2 + soft_penalty_3 + soft_penalty_4 + soft_penalty_5
-    # ) 
-    # print(f"Total soft penalties: {total_soft_penalty}")  
 
     return root
 
