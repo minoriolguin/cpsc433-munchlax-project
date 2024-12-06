@@ -11,6 +11,9 @@ class GameSlot:
     def is_full(self):
         return len(self.assignedGames) >= self.gameMax
 
+    def remaining_capacity(self):
+        return self.gameMax - len(self.assignedGames)
+
     def copy(self):
         copied_slot = GameSlot(self.id)
         copied_slot.day = self.day
