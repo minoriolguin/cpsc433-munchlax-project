@@ -29,24 +29,24 @@ class HardConstraints:
     # function to check if all hard constraints are satisfied
     def check_hard_constraints(self, schedule):
 
-        if self.over_gamemax(schedule):
-            return False
+        # if self.over_gamemax(schedule):
+        #     return False
 
-        if self.over_practicemax(schedule):
-            return False
+        # if self.over_practicemax(schedule):
+        #     return False
 
-        if self.notcompatible(schedule):
-            return False
+        # if self.notcompatible(schedule):
+        #     return False
 
-        if self.unwanted(schedule):
-            return False
+        # if self.unwanted(schedule):
+        #     return False
 
-        # city of calgary constraints:
-        if self.check_overlapping(schedule):
-            return False
+        # # city of calgary constraints:
+        # if self.check_overlapping(schedule):
+        #     return False
 
-        if self.evening_divisions(schedule):
-            return False
+        # if self.evening_divisions(schedule):
+        #     return False
 
         # at this point all the hard constraints have passed
         return True
@@ -128,10 +128,10 @@ class HardConstraints:
                             end1 = start1 + 2
                     else:
                         end1 = start1 + 2
-
-                    if d1 == "MO":
+                    
+                    if d2 == "MO":
                         end2 = start2 + 1
-                    elif d1 == "TU":
+                    elif d2 == "TU":
                         if is_game(incompatable_pair[1]):
                             end2 = start2 + 1.5
                         else:
@@ -205,3 +205,78 @@ def is_game(id):
         return False
     else:
         return True
+
+def generate_overlapping_slots_map(slots):
+    overlapping = {}
+    for slot1 in slots:
+
+        if isinstance(slot1, PracticeSlot):
+            slot_id1 = "prc" + slot1.id
+        else:
+            slot_id1 = "game" + slot1.id
+        
+        overlapping[slot_id1] = [slot_id1] # slot overlaps with itself
+
+        for slot2 in slots:
+
+            if slot1 != slot2:
+
+                if isinstance(slot2, PracticeSlot):
+                    slot_id2 = "prc" + slot2.id
+                else:
+                    slot_id2 = "game" + slot2.id
+
+                d1 = slot1.day
+                d2 = slot2.day
+                if d1 == d2 or (d1 == "FR" and d2 == "MO") or (d1 == "MO" and d2 == "FR"):
+                    
+                    # convert the the times to ints
+                    if len(str(slot1.startTime)) == 4:
+                        start1 = int(str(slot1.startTime)[0:1])
+                    else:
+                        start1 = int(str(slot1.startTime)[0:2])
+
+                    if int(str(slot1.startTime)[len(str(slot1.startTime))-2:len(str(slot1.startTime))]) == 30:
+                        start1 += 0.5
+                    
+                    # convert the the times to ints
+                    if len(str(slot2.startTime)) == 4:
+                        start2 = int(str(slot2.startTime)[0:1])
+                    else:
+                        start2 = int(str(slot2.startTime)[0:2])
+
+                    if int(str(slot2.startTime)[len(str(slot2.startTime))-2:len(str(slot2.startTime))]) == 30:
+                        start2 += 0.5
+
+                    # calculate time interval
+                    end1 = 0
+                    end2 = 0
+
+                    if d1 == "MO":
+                        end1 = start1 + 1
+                    elif d1 == "TU":
+                        if isinstance(slot1, GameSlot):
+                            end1 = start1 + 1.5
+                        else:
+                            end1 = start1 + 2
+                    else:
+                        end1 = start1 + 2
+                    
+                    if d2 == "MO":
+                        end2 = start2 + 1
+                    elif d2 == "TU":
+                        if isinstance(slot2, GameSlot):
+                            end2 = start2 + 1.5
+                        else:
+                            end2 = start2 + 2
+                    else:
+                        end2 = start2 + 2
+                    
+                    # check for overlap in the time intervals
+                    if max(start1, start2) < min(end1, end2):
+                        overlapping[slot_id1].append(slot_id2)
+    return overlapping
+                
+
+
+

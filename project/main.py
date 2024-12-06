@@ -18,6 +18,7 @@ from node import Node
 from collections import defaultdict
 from hardConstraints import HardConstraints
 from softContraints import SoftConstraints
+from hardConstraints import generate_overlapping_slots_map
 
 # Global variables
 best_schedule = None
@@ -189,7 +190,7 @@ def preprocess_incompatible_pairs(not_compatible):
     return incompatible_map
 
 # And-Tree build
-def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, softConstraints, incompatible_map, depth=0):
+def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, pen_gamemin, pen_practicemin, incompatible_map, overlapping_map, unwanted, depth=0):
     global best_schedule, best_eval_score, best_schedule_is_complete
     #print(f"DEBUG: Building tree at depth {depth}, unscheduled_events={len(unscheduled_events)}")
     # print(f"current depth: {depth}")
@@ -234,11 +235,51 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, s
                 continue
             if isinstance(event, Practice) and not isinstance(slot, PracticeSlot):
                 continue
-            if hasattr(slot, 'assigned_event') and slot.assigned_event and slot.assigned_event.id in incompatible_map.get(event.id, set()):
-                continue
+            # if hasattr(slot, 'assigned_event') and slot.assigned_event and slot.assigned_event.id in incompatible_map.get(event.id, set()):
+            #     continue
             # Skip full slots
-            if slot.is_full():
+            # if slot.is_full():
+            #     continue
+
+            slot_id = "prc" + slot.id if isinstance(slot, PracticeSlot) else "game" + slot.id
+            incompatable_true = False
+
+            if slot_id in overlapping_map.keys():
+                for overlapping_slot in overlapping_map[slot_id]:
+                    if overlapping_slot in node.schedule.slot_to_events.keys():
+                        overlapping_events = node.schedule.slot_to_events[overlapping_slot]
+                        for overlapping_event in overlapping_events:
+                            if ((event.id, overlapping_event) in incompatible_map or (overlapping_event, event.id) in incompatible_map):
+                                incompatable_true = True
+                                break
+                    if incompatable_true:
+                        break
+            if incompatable_true:
                 continue
+
+            # check if unwanted
+            if (event.id, slot.day, slot.startTime) in unwanted:
+                continue
+
+            # check for evening events
+            if event.div != "":
+                if str(event.div)[0] == "9":
+                    if len(str(slot.startTime)) == 4:
+                        start = int(str(slot.startTime)[0:1])
+                    else:
+                        start = int(str(slot.startTime)[0:2])
+                    if start < 18:
+                        continue
+            
+            # check if slot is full
+            if isinstance(slot, PracticeSlot):
+                if "prc" + slot.id in node.schedule.slot_to_events.keys():
+                    if len(node.schedule.slot_to_events["prc" + slot.id]) >= slot.pracMax:
+                        continue
+            else:
+                if "game" + slot.id in node.schedule.slot_to_events.keys():
+                    if len(node.schedule.slot_to_events["game" + slot.id]) >= slot.gameMax:
+                        continue
 
             # Create a new node and copy current state
             child_slots = [s.copy() for s in parent_slots]
@@ -249,6 +290,20 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, s
             if not check_hard_constraints(new_schedule):
                 #print(f"DEBUG: Hard constraints failed for event {event.id} in slot {slot.id}")
                 continue
+
+            # update slot to events and event to slots
+            if isinstance(slot, PracticeSlot):
+                if "prc" + slot.id not in new_schedule.slot_to_events.keys():
+                    new_schedule.slot_to_events["prc" + slot.id] = [event.id]
+                else:
+                    new_schedule.slot_to_events["prc" + slot.id].append(event.id)
+                new_schedule.event_to_slot[event.id] = "prc" + slot.id
+            else:
+                if "game" + slot.id not in new_schedule.slot_to_events.keys():
+                    new_schedule.slot_to_events["game" + slot.id] = [event.id]
+                else:
+                    new_schedule.slot_to_events["game" + slot.id].append(event.id)
+                new_schedule.event_to_slot[event.id] = "game" + slot.id
 
             # Create a new child node if valid
             child_node = Node(schedule=new_schedule, sol="?")
@@ -261,7 +316,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, s
 
             # Continue recursion with remaining events
             remaining_events = [e for e in unscheduled_events if e != event]
-            build_tree(child_node, remaining_events, child_slots, check_hard_constraints, softConstraints, incompatible_map, depth + 1)
+            build_tree(child_node, remaining_events, child_slots, check_hard_constraints, pen_gamemin, pen_practicemin, incompatible_map, overlapping_map, unwanted, depth + 1)
 
 
 # Main method
@@ -286,6 +341,19 @@ def main():
 
     hardConstraints = HardConstraints(parser)
     softConstraints = SoftConstraints(parser)
+
+    not_compatible = []
+    for pair in hardConstraints.input_parser.not_compatible:
+        not_compatible.append((pair[0], pair[1]))
+    not_compatible = set(not_compatible)
+
+    overlapping_map = generate_overlapping_slots_map(slots)
+
+    # process unwanted
+    processed_unwanted = []
+    for unwanted_pair in parser.unwanted:
+        processed_unwanted.append((unwanted_pair['id'], unwanted_pair['day'], unwanted_pair['time']))
+    processed_unwanted = set(processed_unwanted)
 
     try:
         start = time.time()

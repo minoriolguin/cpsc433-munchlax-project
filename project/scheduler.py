@@ -16,6 +16,11 @@ class Scheduler:
         self.events = events if events is not None else []
         self.scheduled_events = []
 
+        # for checking contraints while building the tree
+        # using IDs so that things don't get mixed up with copies of objects
+        self.event_to_slot = {}
+        self.slot_to_events = {}
+
     def add_slot(self, slot):
         if slot not in self.scheduleVersion:
             self.scheduleVersion[slot] = "$"
@@ -72,4 +77,6 @@ class Scheduler:
     def copy_schedule(self):
         new_schedule = Scheduler(events=self.events)
         new_schedule.scheduleVersion = self.scheduleVersion.copy()
+        new_schedule.event_to_slot = self.event_to_slot.copy()
+        new_schedule.slot_to_events = self.slot_to_events.copy()
         return new_schedule
