@@ -21,7 +21,6 @@ from hardConstraints import HardConstraints
 from softConstraints import SoftConstraints
 
 # Global variables
-softConstraints = None
 best_schedule = None
 best_eval_score = float('inf')
 best_schedule_is_complete = False
@@ -214,12 +213,9 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, e
                 best_schedule_is_complete = True
     else:
         # Partial schedule
-        # print(f"DEBUG: in unscheduled else")
-        # print(f"DEBUG: Best eval score is {best_eval_score}")
+        current_eval_score = node.schedule.calculate_eval_value(parent_slots, softConstraints)
         # if not best_schedule_is_complete and current_eval_score < best_eval_score:
         if not best_schedule_is_complete:
-            
-            # print(f"DEBUG: Saving best partial...")
             best_eval_score = current_eval_score
             best_schedule = node.schedule.copy_schedule()
 
