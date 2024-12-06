@@ -23,13 +23,15 @@ best_eval_score = float('inf')
 pen_gamemin = None
 pen_practicemin = None
 checked_states = set()
+best_schedule_is_complete = False
 MAX_DEPTH = 100 
 
 # Signal handler to handle early stops 
 def signal_handler(sig, frame):
-    global best_schedule, best_eval_score, slots, pen_gamemin, pen_practicemin
+    global best_schedule, best_eval_score, slots, pen_gamemin, pen_practicemin, best_schedule_is_complete
     if best_schedule:
-        print("\n*Best Schedule Found (Interrupted): ")
+        status = "Complete" if best_schedule_is_complete else "Partial"
+        print(f"\n*Best Schedule Found ({status} - Interrupted): ")
         best_schedule.print_schedule(slots, pen_gamemin, pen_practicemin)
     else:
         print("No valid schedule found.")
@@ -137,30 +139,25 @@ def reorder_events(events):
 
     return reordered_events
 
-# Prioritizes slots
 def prioritize_slots(event, slots):
-    # Filter slots based on event type
+    # Debug slot filtering and prioritization
+    print(f"DEBUG: Prioritizing slots for event {event.id}")
     if isinstance(event, Game):
         valid_slots = [slot for slot in slots if isinstance(slot, GameSlot)]
     elif isinstance(event, Practice):
         valid_slots = [slot for slot in slots if isinstance(slot, PracticeSlot)]
     else:
-        return []  # Return empty if event type is unknown
-
-    # Sort slots based on prioritization rules
-    if isinstance(event, Game) or isinstance(event, Practice):
-        # Prioritize based on event division
-        prioritized = sorted(
-            valid_slots,
-            key=lambda slot: (
-                event.div != 9,  # False for div 9 (higher priority for div 9 events)
-                int(slot.startTime.split(':')[0]) < 18,  # True if start time < 18 (prioritize evening for div 9)
-                -slot.remaining_capacity()  # Higher capacity slots first
-            )
+        return []
+    
+    prioritized = sorted(
+        valid_slots,
+        key=lambda slot: (
+            event.div != 9,  # False for div 9 (higher priority)
+            int(slot.startTime.split(':')[0]) < 18,  # True if start time < 18
+            -slot.remaining_capacity()  # Higher capacity first
         )
-    else:
-        prioritized = valid_slots  # No specific prioritization
-
+    )
+    print(f"DEBUG: Prioritized slots: {[slot.id for slot in prioritized]}")
     return prioritized
 
 
@@ -173,35 +170,32 @@ def preprocess_incompatible_pairs(not_compatible):
 
 # And-Tree build
 def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, pen_gamemin, pen_practicemin, incompatible_map, depth=0):
-    global best_schedule, best_eval_score
-    
+    global best_schedule, best_eval_score, best_schedule_is_complete
+    print(f"DEBUG: Building tree at depth {depth}, unscheduled_events={len(unscheduled_events)}")
     # print(f"current depth: {depth}")
     if depth > MAX_DEPTH:
         # print("Max depth reached, terminating this branch.")
         return
 
-    # Base case: check if all events have been scheduled
+    # Base case: All events scheduled
     if not unscheduled_events:
-        # print(f"Unscheduled events: {len(unscheduled_events)}")
+        # Complete schedule
         eval_score = node.schedule.calculate_eval_value(parent_slots, pen_gamemin, pen_practicemin)
         if check_hard_constraints(node.schedule):
-            # Valid schedule found
-            # node.schedule.print_schedule(parent_slots, pen_gamemin, pen_practicemin)
-            # print("\n")
             node.sol = "yes"
-            
-            # Update best schedule
-            if eval_score < best_eval_score:
+            if not best_schedule_is_complete or eval_score < best_eval_score:
                 best_eval_score = eval_score
                 best_schedule = node.schedule.copy_schedule()
-        else:
-            # Invalid schedule
-            # print("\nInvalid Schedule:")
-            node.sol = "?"
-        return
+                best_schedule_is_complete = True
+    else:
+        # Partial schedule
+        current_eval_score = node.schedule.calculate_eval_value(parent_slots, pen_gamemin, pen_practicemin)
+        if not best_schedule_is_complete and current_eval_score < best_eval_score:
+            best_eval_score = current_eval_score
+            best_schedule = node.schedule.copy_schedule()
 
     # Check for already-visited states
-    state_hash = hash(str(node.schedule))
+    state_hash = hash(frozenset(node.schedule.scheduleVersion.items()))
     if state_hash in checked_states:
         # print(f"Skipping already-checked state at depth {depth}.")
         return
@@ -213,6 +207,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, p
 
     for event in ordered_events:
         prioritized_slots = prioritize_slots(event, parent_slots)
+        print(f"DEBUG: Event {event.id} has prioritized slots: {[slot.id for slot in prioritized_slots]}")
         for slot in prioritized_slots:
             # Skip incompatible slot types
             if isinstance(event, Game) and not isinstance(slot, GameSlot):
@@ -232,6 +227,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, p
 
             # Check the new schedule with hard constraints
             if not check_hard_constraints(new_schedule):
+                print(f"DEBUG: Hard constraints failed for event {event.id} in slot {slot.id}")
                 continue
 
             # Create a new child node if valid
