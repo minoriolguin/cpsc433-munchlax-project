@@ -190,7 +190,7 @@ def preprocess_incompatible_pairs(not_compatible):
     return incompatible_map
 
 # And-Tree build
-def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, pen_gamemin, pen_practicemin, incompatible_map, overlapping_map, unwanted, depth=0):
+def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, softConstraints, incompatible_map, overlapping_map, unwanted, depth=0):
     global best_schedule, best_eval_score, best_schedule_is_complete
     #print(f"DEBUG: Building tree at depth {depth}, unscheduled_events={len(unscheduled_events)}")
     # print(f"current depth: {depth}")
@@ -316,7 +316,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, p
 
             # Continue recursion with remaining events
             remaining_events = [e for e in unscheduled_events if e != event]
-            build_tree(child_node, remaining_events, child_slots, check_hard_constraints, pen_gamemin, pen_practicemin, incompatible_map, overlapping_map, unwanted, depth + 1)
+            build_tree(child_node, remaining_events, child_slots, check_hard_constraints, softConstraints, incompatible_map, overlapping_map, unwanted, depth + 1)
 
 
 # Main method
@@ -357,7 +357,7 @@ def main():
 
     try:
         start = time.time()
-        build_tree(root, unscheduled_events, slots, hardConstraints.check_hard_constraints, softConstraints, incompatible_map)
+        build_tree(root, unscheduled_events, slots, hardConstraints.check_hard_constraints, softConstraints, not_compatible, overlapping_map, processed_unwanted)
         end = time.time()
     except Exception as e:
         print(f"An error occurred: {e}")
