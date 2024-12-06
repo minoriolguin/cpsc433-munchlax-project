@@ -9,7 +9,6 @@ from game import Game
 from practice import Practice
 from practiceSlot import PracticeSlot
 from gameSlot import GameSlot
-from input_parser import InputParser
 
 class Scheduler:
     def __init__(self, events=None):
@@ -35,40 +34,22 @@ class Scheduler:
     def get_schedule(self):
         return self.scheduleVersion
 
-    # **ASSUMPTION**: the eval_value still gets calculated for a game slot or practice slot EVEN IF there are not enough games or practices that could be assigned to each game slot or practice slot to satisfy the gamemin or practicemin in the first place
-    # **LIMITATIONS**: I believe will be incorrect if the input.txt file repeats the same game or practice slot twice or more (I don't think we would have to worry about this as all input files so far have unique game and practice slots provided)
-    def calculate_eval_value(self, parent_slots, pen_gamemin, pen_practicemin):
-        eval_value = 0
+    def calculate_eval_value(self, parent_slots, softConstraints):
+        minimum_slot_usage_penalty = softConstraints.check_minimum_slot_usage(self, parent_slots)
+        #print(f"Minimum Slot Usage Penalty: {minimum_slot_usage_penalty}")
 
-        sorted_schedule = sorted(
-            [(event, slot) for slot, event in self.scheduleVersion.items() if event != "$"],
-            key=lambda x: x[0].id)
+        preferred_slot_usage_penalty = softConstraints.check_preferred_time_slots(self)
+        #print(f"Preferred Slot Usage Penalty: {preferred_slot_usage_penalty}")
 
-        for parent_slot in parent_slots:
-            assigned_games = 0
-            assigned_practices = 0
+        paired_events_penalty = softConstraints.check_paired_events(self)
+        #print(f"Paired Events Penalty: {paired_events_penalty}")
 
-            for event, slot in sorted_schedule:
-                if self.is_same_slot(slot, parent_slot):
-                    if isinstance(slot, GameSlot):
-                        assigned_games = assigned_games + 1
-                    elif isinstance(slot, PracticeSlot):
-                        assigned_practices = assigned_practices + 1
-
-            if isinstance(parent_slot, GameSlot):
-                if assigned_games < parent_slot.gameMin:
-                    eval_value = eval_value + (parent_slot.gameMin - assigned_games) * pen_gamemin
-            elif isinstance(parent_slot, PracticeSlot):
-                if assigned_practices < parent_slot.pracMin:
-                    eval_value = eval_value + (parent_slot.pracMin - assigned_practices) * pen_practicemin
+        eval_value = minimum_slot_usage_penalty + preferred_slot_usage_penalty
 
         return eval_value
 
-    def is_same_slot(self, slot1, slot2):
-        return isinstance(slot1, type(slot2)) and slot1.day == slot2.day and slot1.startTime == slot2.startTime
-
-    def print_schedule(self, parent_slots, pen_gamemin, pen_practicemin):
-        eval_value = self.calculate_eval_value(parent_slots, pen_gamemin, pen_practicemin)
+    def print_schedule(self, parent_slots, softConstraints):
+        eval_value = self.calculate_eval_value(parent_slots, softConstraints)
         print(f"\033[1mEval-value:\033[0m {eval_value}")
 
         id_width = 30
