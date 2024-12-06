@@ -9,81 +9,69 @@ class SoftConstraints:
         self.input_parser = input_parser
 
     def check_minimum_slot_usage(self, schedule):
-        total_penalty = 0
-        for slot, events in schedule.scheduleVersion.items():
-            if not isinstance(events, list):
-                events = [events]
-            games_count = sum(isinstance(event, Game) for event in events)
-            practices_count = sum(isinstance(event, Practice) for event in events)
+        penalty = 0
+
+        print("Debug: Starting Minimum Slot Usage Check")
+        for slot, event in schedule.scheduleVersion.items():
             if isinstance(slot, GameSlot):
-                gamemin = getattr(slot, "gameMin", 0)
-                practicemin = 0
+                assigned_games = len([e for e in slot.assignedGames if e != "$"])
+                print(f"Game Slot: {slot.id}, Assigned Games: {assigned_games}, Min Required: {slot.gameMin}")
+                if assigned_games < slot.gameMin:
+                    slot_penalty = (slot.gameMin - assigned_games) * self.input_parser.pengamemin
+                    print(f"Penalty for Slot {slot.id}: {slot_penalty}")
+                    penalty += slot_penalty
             elif isinstance(slot, PracticeSlot):
-                gamemin = 0
-                practicemin = getattr(slot, "pracMin", 0)
-            else:
-                gamemin = 0
-                practicemin = 0
-            if games_count < gamemin:
-                total_penalty += (gamemin - games_count) * self.input_parser.pengamemin
-            if practices_count < practicemin:
-                total_penalty += (practicemin - practices_count) * self.input_parser.penpracticemin
-            print(f"Slot: {slot}, Games Count: {games_count}, Practices Count: {practices_count}, gamemin: {gamemin}, practicemin: {practicemin}")
-        return total_penalty
+                assigned_practices = len([e for e in slot.assignedPractices if e != "$"])
+                print(f"Practice Slot: {slot.id}, Assigned Practices: {assigned_practices}, Min Required: {slot.pracMin}")
+                if assigned_practices < slot.pracMin:
+                    slot_penalty = (slot.pracMin - assigned_practices) * self.input_parser.penpracticemin
+                    print(f"Penalty for Slot {slot.id}: {slot_penalty}")
+                    penalty += slot_penalty
+
+        print(f"Total Minimum Slot Usage Penalty: {penalty}")
+        return penalty
 
     def check_preferred_time_slots(self, schedule):
-        total_penalty = 0
-        for slot, events in schedule.scheduleVersion.items():
-            if not isinstance(events, list):
-                events = [events]
-            for event in events:
-                if isinstance(event, (Game, Practice)):
-                    for preference in self.input_parser.preferences:
-                        preferred_slot = f"{preference['day']}, {preference['time']}"
-                        if preference['id'] == event.id and preferred_slot == slot:
-                            preference_value = int(preference['score'])
-                            if preference_value < 0:
-                                total_penalty += abs(preference_value) * self.input_parser.w_pre
-                        print(f"Event: {event}, Slot: {slot}, Matched Preference: {preference}")
-        return total_penalty
+        penalty = 0
+
+        print("Debug: Starting Preferred Time Slots Check")
+        for slot, event in schedule.scheduleVersion.items():
+            if event != "$":
+                preferred_time = next(
+                    (pref for pref in self.input_parser.preferences if pref['id'] == event.id),
+                    None
+                )
+                if slot.day != preferred_time['day'] or str(slot.startTime) != str(preferred_time['time']):
+                    print(f"Mismatch detected: Event {event.id} assigned to {slot.day} {slot.startTime}, preferred {preferred_time['day']} {preferred_time['time']}")
+                    penalty += int(preferred_time['score'])
 
 
+
+        print(f"Total Preferred Time Slots Penalty: {penalty}")
+        return penalty
+    
     def check_paired_events(self, schedule):
-        total_penalty = 0
+        penalty = 0
+
+        print("Debug: Starting Paired Events Check")
+
         for pair in self.input_parser.pair:
-            event_a, event_b = pair
-            slot_a = next((slot for slot, events in schedule.scheduleVersion.items() if (isinstance(events, list) and event_a in events) or (event_a == events)), None)
-            slot_b = next((slot for slot, events in schedule.scheduleVersion.items() if (isinstance(events, list) and event_b in events) or (event_b == events)), None)
-            if slot_a != slot_b:
-                total_penalty += self.input_parser.pen_notpaired
-        return total_penalty
+            event1_id, event2_id = pair
+            event1_slot = None
+            event2_slot = None
 
-    def check_avoid_overloading_divisions(self, schedule):
-        total_penalty = 0
-        for slot, events in schedule.scheduleVersion.items():
-            if not isinstance(events, list):
-                events = [events]
-            grouped_divisions = {}
-            for event in events:
-                if isinstance(event, Game) or isinstance(event, Practice):
-                    key = (event.league, event.tier)
-                    if key not in grouped_divisions:
-                        grouped_divisions[key] = 0
-                    grouped_divisions[key] += 1
-            for count in grouped_divisions.values():
-                if count > 1:
-                    total_penalty += (count - 1) * self.input_parser.pen_section
-        return total_penalty
+            for slot, event in schedule.scheduleVersion.items():
+                if event != "$":
+                    if event.id == event1_id:
+                        event1_slot = slot
+                    elif event.id == event2_id:
+                        event2_slot = slot
 
-    def check_spread_of_events(self, schedule):
-        total_penalty = 0
-        slot_usage = {}
-        for slot, events in schedule.scheduleVersion.items():
-            if isinstance(events, (Game, Practice)):
-                events = [events]
-            slot_usage[slot] = len(events)
-        max_events = max(slot_usage.values()) if slot_usage else 0
-        min_events = min(slot_usage.values()) if slot_usage else 0
-        if max_events - min_events > 1:
-            total_penalty += (max_events - min_events) * self.input_parser.w_minfilled
-        return total_penalty
+            if event1_slot and event2_slot and event1_slot != event2_slot:
+                print(f"Unpaired events: {event1_id} in {event1_slot} and {event2_id} in {event2_slot}")
+                penalty += self.parser.pen_notpaired
+
+
+            
+        print(f"Total Paired Events Penalty: {penalty}")
+        return penalty

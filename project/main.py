@@ -295,14 +295,22 @@ def main():
     soft_penalty_1 = softConstraints.check_minimum_slot_usage(schedule)  
     soft_penalty_2 = softConstraints.check_preferred_time_slots(schedule) 
     soft_penalty_3 = softConstraints.check_paired_events(schedule)  
-    soft_penalty_4 = softConstraints.check_avoid_overloading_divisions(schedule)  
-    soft_penalty_5 = softConstraints.check_spread_of_events(schedule)  
+    #soft_penalty_4 = softConstraints.check_avoid_overloading_divisions(schedule)  
+    #soft_penalty_5 = softConstraints.check_spread_of_events(schedule)  
 
-    # Calculate total penalty and display it 
-    total_soft_penalty = (
-        soft_penalty_1 + soft_penalty_2 + soft_penalty_3 + soft_penalty_4 + soft_penalty_5
-    ) 
-    print(f"Total soft penalties: {total_soft_penalty}")  
+
+    # Calculate penalties
+    soft_penalty_1 = softConstraints.check_minimum_slot_usage(root.schedule)
+    soft_penalty_2 = softConstraints.check_preferred_time_slots(root.schedule)
+    soft_penalty_3 = softConstraints.check_paired_events(root.schedule)
+
+    # Print penalties
+    print(f"Debug: Penalty for Minimum Slot Usage: {soft_penalty_1}")
+    print(f"Debug: Penalty for Preferred Time Slots: {soft_penalty_2}")
+    print(f"Debug: Penalty for Preferred Time Slots: {soft_penalty_3}")
+    # Total penalty
+    total_soft_penalty = soft_penalty_1 + soft_penalty_2 + soft_penalty_3
+    print(f"Debug: Total Soft Penalties: {total_soft_penalty}")
 
     return root
 
