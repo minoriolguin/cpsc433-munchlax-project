@@ -16,6 +16,7 @@ from scheduler import Scheduler
 from node import Node
 from collections import defaultdict
 from hardConstraints import HardConstraints
+from softContraints import SoftConstraints
 
 # Global variables
 best_schedule = None
@@ -267,6 +268,8 @@ def main():
     slots = game_slots + practice_slots
 
     hardConstraints = HardConstraints(parser)
+    softConstraints = SoftConstraints(parser)
+
 
     # print("Building tree")
     try:
@@ -286,6 +289,20 @@ def main():
         best_schedule.print_schedule(slots, pen_gamemin, pen_practicemin)
     else:
         print("No valid schedule found.")
+   
+    # Calculate penalties for soft constraints 
+    schedule = root.schedule  # Assuming the root has the final schedule
+    soft_penalty_1 = softConstraints.check_minimum_slot_usage(schedule)  
+    soft_penalty_2 = softConstraints.check_preferred_time_slots(schedule) 
+    soft_penalty_3 = softConstraints.check_paired_events(schedule)  
+    soft_penalty_4 = softConstraints.check_avoid_overloading_divisions(schedule)  
+    soft_penalty_5 = softConstraints.check_spread_of_events(schedule)  
+
+    # Calculate total penalty and display it 
+    total_soft_penalty = (
+        soft_penalty_1 + soft_penalty_2 + soft_penalty_3 + soft_penalty_4 + soft_penalty_5
+    ) 
+    print(f"Total soft penalties: {total_soft_penalty}")  
 
     return root
 
