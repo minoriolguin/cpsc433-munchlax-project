@@ -8,33 +8,40 @@ class SoftConstraints:
     def __init__(self, input_parser: InputParser):
         self.input_parser = input_parser
 
-    def check_minimum_slot_usage(self, schedule):
+    def check_minimum_slot_usage(self, schedule, parent_slots, pen_gamemin, pen_practicemin):
         penalty = 0
 
-        print("Debug: Starting Minimum Slot Usage Check")
-        for slot, event in schedule.scheduleVersion.items():
-            if isinstance(slot, GameSlot):
-                assigned_games = len([e for e in slot.assignedGames if e != "$"])
-                print(f"Game Slot: {slot.id}, Assigned Games: {assigned_games}, Min Required: {slot.gameMin}")
-                if assigned_games < slot.gameMin:
-                    slot_penalty = (slot.gameMin - assigned_games) * self.input_parser.pengamemin
-                    print(f"Penalty for Slot {slot.id}: {slot_penalty}")
-                    penalty += slot_penalty
-            elif isinstance(slot, PracticeSlot):
-                assigned_practices = len([e for e in slot.assignedPractices if e != "$"])
-                print(f"Practice Slot: {slot.id}, Assigned Practices: {assigned_practices}, Min Required: {slot.pracMin}")
-                if assigned_practices < slot.pracMin:
-                    slot_penalty = (slot.pracMin - assigned_practices) * self.input_parser.penpracticemin
-                    print(f"Penalty for Slot {slot.id}: {slot_penalty}")
-                    penalty += slot_penalty
+        sorted_schedule = sorted(
+            [(event, slot) for slot, event in schedule.scheduleVersion.items() if event != "$"],
+            key=lambda x: x[0].id)
 
-        print(f"Total Minimum Slot Usage Penalty: {penalty}")
+        for parent_slot in parent_slots:
+            assigned_games = 0
+            assigned_practices = 0
+
+            for event, slot in sorted_schedule:
+                if self.is_same_slot(slot, parent_slot):
+                    if isinstance(slot, GameSlot):
+                        assigned_games = assigned_games + 1
+                    elif isinstance(slot, PracticeSlot):
+                        assigned_practices = assigned_practices + 1
+
+            if isinstance(parent_slot, GameSlot):
+                if assigned_games < parent_slot.gameMin:
+                    penalty = penalty + (parent_slot.gameMin - assigned_games) * pen_gamemin
+            elif isinstance(parent_slot, PracticeSlot):
+                if assigned_practices < parent_slot.pracMin:
+                    penalty = penalty + (parent_slot.pracMin - assigned_practices) * pen_practicemin
+
         return penalty
+
+    def is_same_slot(self, slot1, slot2):
+        return isinstance(slot1, type(slot2)) and slot1.day == slot2.day and slot1.startTime == slot2.startTime
 
     def check_preferred_time_slots(self, schedule):
         penalty = 0
 
-        print("Debug: Starting Preferred Time Slots Check")
+        #print("Debug: Starting Preferred Time Slots Check")
         for slot, event in schedule.scheduleVersion.items():
             if event != "$":
                 preferred_time = next(
@@ -42,18 +49,18 @@ class SoftConstraints:
                     None
                 )
                 if slot.day != preferred_time['day'] or str(slot.startTime) != str(preferred_time['time']):
-                    print(f"Mismatch detected: Event {event.id} assigned to {slot.day} {slot.startTime}, preferred {preferred_time['day']} {preferred_time['time']}")
+                    #print(f"Mismatch detected: Event {event.id} assigned to {slot.day} {slot.startTime}, preferred {preferred_time['day']} {preferred_time['time']}")
                     penalty += int(preferred_time['score'])
 
 
 
-        print(f"Total Preferred Time Slots Penalty: {penalty}")
+        #print(f"Total Preferred Time Slots Penalty: {penalty}")
         return penalty
-    
+
     def check_paired_events(self, schedule):
         penalty = 0
 
-        print("Debug: Starting Paired Events Check")
+        #print("Debug: Starting Paired Events Check")
 
         for pair in self.input_parser.pair:
             event1_id, event2_id = pair
@@ -68,10 +75,10 @@ class SoftConstraints:
                         event2_slot = slot
 
             if event1_slot and event2_slot and event1_slot != event2_slot:
-                print(f"Unpaired events: {event1_id} in {event1_slot} and {event2_id} in {event2_slot}")
+                #print(f"Unpaired events: {event1_id} in {event1_slot} and {event2_id} in {event2_slot}")
                 penalty += self.parser.pen_notpaired
 
 
-            
-        print(f"Total Paired Events Penalty: {penalty}")
+
+        #print(f"Total Paired Events Penalty: {penalty}")
         return penalty
