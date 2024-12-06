@@ -60,7 +60,6 @@ class SoftConstraints:
 
     def check_paired_events(self, schedule):
         penalty = 0
-
         #print("Debug: Starting Paired Events Check")
 
         for pair in self.input_parser.pair:
@@ -79,7 +78,64 @@ class SoftConstraints:
                 #print(f"Unpaired events: {event1_id} in {event1_slot} and {event2_id} in {event2_slot}")
                 penalty += self.input_parser.pen_notpaired
 
-
-
         #print(f"Total Paired Events Penalty: {penalty}")
         return penalty
+
+
+    def check_avoid_overloading_divisions(self, schedule):
+        
+        penalty = 0
+        print("Debug: Starting Overloading Divisions Check")
+
+        # Dictionary to track slots and their assigned divisions
+        slot_divisions = {}
+
+        # Iterate through all assigned slots
+        for slot, event in schedule.scheduleVersion.items():
+            if event != "$":  # Skip unassigned events
+                slot_key = f"{slot.day} {slot.startTime}"  # Unique key for each slot
+                if slot_key not in slot_divisions:
+                    slot_divisions[slot_key] = []
+                slot_divisions[slot_key].append(event.div)  # Access division using 'div'
+
+        # Check for overloading divisions in the same slot
+        for slot_key, divisions in slot_divisions.items():
+            unique_divisions = set(divisions)
+            overload_count = len(divisions) - len(unique_divisions)
+            if overload_count > 0:  # If there are overlaps
+                slot_penalty = overload_count * self.input_parser.penalty_overload
+                print(f"Slot: {slot_key}, Overloaded Divisions: {overload_count}, Penalty: {slot_penalty}")
+                penalty += slot_penalty
+
+        print(f"Total Overloading Divisions Penalty: {penalty}")
+        return penalty
+    
+    def check_avoid_overloading_divisions(self, schedule):
+            total_penalty = 0
+            for slot, events in schedule.scheduleVersion.items():
+                if not isinstance(events, list):
+                    events = [events]
+                grouped_divisions = {}
+                for event in events:
+                    if isinstance(event, Game) or isinstance(event, Practice):
+                        key = (event.league, event.tier)
+                        if key not in grouped_divisions:
+                            grouped_divisions[key] = 0
+                        grouped_divisions[key] += 1
+                for count in grouped_divisions.values():
+                    if count > 1:
+                        total_penalty += (count - 1) * self.input_parser.pen_section
+            return total_penalty
+    
+    def check_spread_of_events(self, schedule):
+        total_penalty = 0
+        slot_usage = {}
+        for slot, events in schedule.scheduleVersion.items():
+            if isinstance(events, (Game, Practice)):
+                events = [events]
+            slot_usage[slot] = len(events)
+        max_events = max(slot_usage.values()) if slot_usage else 0
+        min_events = min(slot_usage.values()) if slot_usage else 0
+        if max_events - min_events > 1:
+            total_penalty += (max_events - min_events) * self.input_parser.w_minfilled
+        return total_penalty
