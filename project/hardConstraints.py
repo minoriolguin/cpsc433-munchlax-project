@@ -91,12 +91,12 @@ class HardConstraints:
                         event1_slot = slot
                     elif event.id == incompatable_pair[1]:
                         event2_slot = slot
-            
+
             if event1_slot is not None and event2_slot is not None:
                 d1 = event1_slot.day
                 d2 = event2_slot.day
                 if d1 == d2 or (d1 == "FR" and d2 == "MO") or (d1 == "MO" and d2 == "FR"):
-                    
+
                     # convert the the times to ints
                     if len(str(event1_slot.startTime)) == 4:
                         start1 = int(str(event1_slot.startTime)[0:1])
@@ -105,7 +105,7 @@ class HardConstraints:
 
                     if int(str(event1_slot.startTime)[len(str(event1_slot.startTime))-2:len(str(event1_slot.startTime))]) == 30:
                         start1 += 0.5
-                    
+
                     # convert the the times to ints
                     if len(str(event2_slot.startTime)) == 4:
                         start2 = int(str(event2_slot.startTime)[0:1])
@@ -128,7 +128,7 @@ class HardConstraints:
                             end1 = start1 + 2
                     else:
                         end1 = start1 + 2
-                    
+
                     if d1 == "MO":
                         end2 = start2 + 1
                     elif d1 == "TU":
@@ -138,7 +138,7 @@ class HardConstraints:
                             end2 = start2 + 2
                     else:
                         end2 = start2 + 2
-                    
+
                     # check for overlap in the time intervals
                     if max(start1, start2) < min(end1, end2):
                         return True

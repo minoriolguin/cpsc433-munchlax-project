@@ -142,7 +142,7 @@ def reorder_events(events):
 
 def prioritize_slots(event, slots):
     # Debug slot filtering and prioritization
-    print(f"DEBUG: Prioritizing slots for event {event.id}")
+    #print(f"DEBUG: Prioritizing slots for event {event.id}")
     if isinstance(event, Game):
         valid_slots = [slot for slot in slots if isinstance(slot, GameSlot)]
     elif isinstance(event, Practice):
@@ -158,7 +158,7 @@ def prioritize_slots(event, slots):
             -slot.remaining_capacity()  # Higher capacity first
         )
     )
-    print(f"DEBUG: Prioritized slots: {[slot.id for slot in prioritized]}")
+    #print(f"DEBUG: Prioritized slots: {[slot.id for slot in prioritized]}")
     return prioritized
 
 
@@ -170,9 +170,9 @@ def preprocess_incompatible_pairs(not_compatible):
     return incompatible_map
 
 # And-Tree build
-def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, pen_gamemin, pen_practicemin, incompatible_map, depth=0):
+def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, softConstraints, incompatible_map, depth=0):
     global best_schedule, best_eval_score, best_schedule_is_complete
-    print(f"DEBUG: Building tree at depth {depth}, unscheduled_events={len(unscheduled_events)}")
+    #print(f"DEBUG: Building tree at depth {depth}, unscheduled_events={len(unscheduled_events)}")
     # print(f"current depth: {depth}")
     if depth > MAX_DEPTH:
         # print("Max depth reached, terminating this branch.")
@@ -181,7 +181,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, p
     # Base case: All events scheduled
     if not unscheduled_events:
         # Complete schedule
-        eval_score = node.schedule.calculate_eval_value(parent_slots, pen_gamemin, pen_practicemin)
+        eval_score = node.schedule.calculate_eval_value(parent_slots, softConstraints)
         if check_hard_constraints(node.schedule):
             node.sol = "yes"
             if not best_schedule_is_complete or eval_score < best_eval_score:
@@ -190,7 +190,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, p
                 best_schedule_is_complete = True
     else:
         # Partial schedule
-        current_eval_score = node.schedule.calculate_eval_value(parent_slots, pen_gamemin, pen_practicemin)
+        current_eval_score = node.schedule.calculate_eval_value(parent_slots, softConstraints)
         if not best_schedule_is_complete and current_eval_score < best_eval_score:
             best_eval_score = current_eval_score
             best_schedule = node.schedule.copy_schedule()
@@ -208,7 +208,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, p
 
     for event in ordered_events:
         prioritized_slots = prioritize_slots(event, parent_slots)
-        print(f"DEBUG: Event {event.id} has prioritized slots: {[slot.id for slot in prioritized_slots]}")
+        #print(f"DEBUG: Event {event.id} has prioritized slots: {[slot.id for slot in prioritized_slots]}")
         for slot in prioritized_slots:
             # Skip incompatible slot types
             if isinstance(event, Game) and not isinstance(slot, GameSlot):
@@ -228,7 +228,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, p
 
             # Check the new schedule with hard constraints
             if not check_hard_constraints(new_schedule):
-                print(f"DEBUG: Hard constraints failed for event {event.id} in slot {slot.id}")
+                #print(f"DEBUG: Hard constraints failed for event {event.id} in slot {slot.id}")
                 continue
 
             # Create a new child node if valid
@@ -242,7 +242,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, p
 
             # Continue recursion with remaining events
             remaining_events = [e for e in unscheduled_events if e != event]
-            build_tree(child_node, remaining_events, child_slots, check_hard_constraints, pen_gamemin, pen_practicemin, incompatible_map, depth + 1)
+            build_tree(child_node, remaining_events, child_slots, check_hard_constraints, softConstraints, incompatible_map, depth + 1)
 
 
 # Main method
@@ -254,8 +254,6 @@ def main():
     game_slots = parser.gameSlots
     practice_slots = parser.practiceSlots
     partial_assign = parser.partial_assign
-    pen_gamemin = parser.pengamemin
-    pen_practicemin = parser.penpracticemin
     incompatible_map = preprocess_incompatible_pairs(parser.not_compatible)
 
     try:
@@ -270,47 +268,22 @@ def main():
     hardConstraints = HardConstraints(parser)
     softConstraints = SoftConstraints(parser)
 
-
-    # print("Building tree")
     try:
-        build_tree(root, unscheduled_events, slots, hardConstraints.check_hard_constraints, pen_gamemin, pen_practicemin, incompatible_map)
+        build_tree(root, unscheduled_events, slots, hardConstraints.check_hard_constraints, softConstraints, incompatible_map)
     except Exception as e:
         print(f"An error occurred: {e}")
         if best_schedule:
             print("\nBest schedule found before error: \n")
-            best_schedule.print_schedule(slots, pen_gamemin, pen_practicemin)
+            best_schedule.print_schedule(slots, softConstraints)
         else:
             print("No valid schedule found before error.")
         return
-    # print("EOP")
 
     if best_schedule:
         print("\nBest schedule found: \n")
-        best_schedule.print_schedule(slots, pen_gamemin, pen_practicemin)
+        best_schedule.print_schedule(slots, softConstraints)
     else:
         print("No valid schedule found.")
-
-    # Calculate penalties for soft constraints
-    schedule = root.schedule  # Assuming the root has the final schedule
-    soft_penalty_1 = softConstraints.check_minimum_slot_usage(schedule, slots, pen_gamemin, pen_practicemin)
-    #soft_penalty_2 = softConstraints.check_preferred_time_slots(schedule)
-    soft_penalty_3 = softConstraints.check_paired_events(schedule)
-    #soft_penalty_4 = softConstraints.check_avoid_overloading_divisions(schedule)
-    #soft_penalty_5 = softConstraints.check_spread_of_events(schedule)
-
-
-    # Calculate penalties
-    # soft_penalty_1 = softConstraints.check_minimum_slot_usage(root.schedule, slots, pen_gamemin, pen_practicemin)
-    # soft_penalty_2 = softConstraints.check_preferred_time_slots(root.schedule)
-    # soft_penalty_3 = softConstraints.check_paired_events(root.schedule)
-
-    # Print penalties
-    # print(f"Debug: Penalty for Minimum Slot Usage: {soft_penalty_1}")
-    # print(f"Debug: Penalty for Preferred Time Slots: {soft_penalty_2}")
-    # print(f"Debug: Penalty for Preferred Time Slots: {soft_penalty_3}")
-    # # Total penalty
-    # total_soft_penalty = soft_penalty_1 + soft_penalty_2 + soft_penalty_3
-    # print(f"Debug: Total Soft Penalties: {total_soft_penalty}")
 
     return root
 

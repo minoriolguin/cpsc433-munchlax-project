@@ -8,7 +8,9 @@ class SoftConstraints:
     def __init__(self, input_parser: InputParser):
         self.input_parser = input_parser
 
-    def check_minimum_slot_usage(self, schedule, parent_slots, pen_gamemin, pen_practicemin):
+    # **ASSUMPTION**: the eval_value still gets calculated for a game slot or practice slot EVEN IF there are not enough games or practices that could be assigned to each game slot or practice slot to satisfy the gamemin or practicemin in the first place
+    # **LIMITATIONS**: I believe will be incorrect if the input.txt file repeats the same game or practice slot twice or more (I don't think we would have to worry about this as all input files so far have unique game and practice slots provided)
+    def check_minimum_slot_usage(self, schedule, parent_slots):
         penalty = 0
 
         sorted_schedule = sorted(
@@ -28,10 +30,10 @@ class SoftConstraints:
 
             if isinstance(parent_slot, GameSlot):
                 if assigned_games < parent_slot.gameMin:
-                    penalty = penalty + (parent_slot.gameMin - assigned_games) * pen_gamemin
+                    penalty = penalty + (parent_slot.gameMin - assigned_games) * self.input_parser.pengamemin
             elif isinstance(parent_slot, PracticeSlot):
                 if assigned_practices < parent_slot.pracMin:
-                    penalty = penalty + (parent_slot.pracMin - assigned_practices) * pen_practicemin
+                    penalty = penalty + (parent_slot.pracMin - assigned_practices) * self.input_parser.penpracticemin
 
         return penalty
 
@@ -48,13 +50,12 @@ class SoftConstraints:
                     (pref for pref in self.input_parser.preferences if pref['id'] == event.id),
                     None
                 )
-                if slot.day != preferred_time['day'] or str(slot.startTime) != str(preferred_time['time']):
-                    #print(f"Mismatch detected: Event {event.id} assigned to {slot.day} {slot.startTime}, preferred {preferred_time['day']} {preferred_time['time']}")
-                    penalty += int(preferred_time['score'])
 
+                if preferred_time is not None:
+                    if slot.day != preferred_time['day'] or str(slot.startTime) != str(preferred_time['time']):
+                        #print(f"Mismatch detected: Event {event.id} assigned to {slot.day} {slot.startTime}, preferred {preferred_time['day']} {preferred_time['time']}")
+                        penalty += int(preferred_time['score'])
 
-
-        #print(f"Total Preferred Time Slots Penalty: {penalty}")
         return penalty
 
     def check_paired_events(self, schedule):
@@ -76,7 +77,7 @@ class SoftConstraints:
 
             if event1_slot and event2_slot and event1_slot != event2_slot:
                 #print(f"Unpaired events: {event1_id} in {event1_slot} and {event2_id} in {event2_slot}")
-                penalty += self.parser.pen_notpaired
+                penalty += self.input_parser.pen_notpaired
 
 
 
