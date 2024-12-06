@@ -25,9 +25,9 @@ pen_gamemin = None
 pen_practicemin = None
 checked_states = set()
 best_schedule_is_complete = False
-MAX_DEPTH = 100 
+MAX_DEPTH = 100
 
-# Signal handler to handle early stops 
+# Signal handler to handle early stops
 def signal_handler(sig, frame):
     global best_schedule, best_eval_score, slots, pen_gamemin, pen_practicemin, best_schedule_is_complete
     if best_schedule:
@@ -99,7 +99,7 @@ def initialize_root(events, game_slots, practice_slots, partial_assign):
 
     return Node(schedule=root_schedule, sol="?")
 
-# Helper function to sort the events so they aren't random, this also prioritizes the 
+# Helper function to sort the events so they aren't random, this also prioritizes the
 # evening slots and divisions starting with 9 so they can be places in evening slots first
 def reorder_events(events):
     # Group events by league, tier, and division
@@ -149,7 +149,7 @@ def prioritize_slots(event, slots):
         valid_slots = [slot for slot in slots if isinstance(slot, PracticeSlot)]
     else:
         return []
-    
+
     prioritized = sorted(
         valid_slots,
         key=lambda slot: (
@@ -289,28 +289,28 @@ def main():
         best_schedule.print_schedule(slots, pen_gamemin, pen_practicemin)
     else:
         print("No valid schedule found.")
-   
-    # Calculate penalties for soft constraints 
+
+    # Calculate penalties for soft constraints
     schedule = root.schedule  # Assuming the root has the final schedule
-    soft_penalty_1 = softConstraints.check_minimum_slot_usage(schedule)  
-    soft_penalty_2 = softConstraints.check_preferred_time_slots(schedule) 
-    soft_penalty_3 = softConstraints.check_paired_events(schedule)  
-    #soft_penalty_4 = softConstraints.check_avoid_overloading_divisions(schedule)  
-    #soft_penalty_5 = softConstraints.check_spread_of_events(schedule)  
+    soft_penalty_1 = softConstraints.check_minimum_slot_usage(schedule, slots, pen_gamemin, pen_practicemin)
+    #soft_penalty_2 = softConstraints.check_preferred_time_slots(schedule)
+    soft_penalty_3 = softConstraints.check_paired_events(schedule)
+    #soft_penalty_4 = softConstraints.check_avoid_overloading_divisions(schedule)
+    #soft_penalty_5 = softConstraints.check_spread_of_events(schedule)
 
 
     # Calculate penalties
-    soft_penalty_1 = softConstraints.check_minimum_slot_usage(root.schedule)
-    soft_penalty_2 = softConstraints.check_preferred_time_slots(root.schedule)
-    soft_penalty_3 = softConstraints.check_paired_events(root.schedule)
+    # soft_penalty_1 = softConstraints.check_minimum_slot_usage(root.schedule, slots, pen_gamemin, pen_practicemin)
+    # soft_penalty_2 = softConstraints.check_preferred_time_slots(root.schedule)
+    # soft_penalty_3 = softConstraints.check_paired_events(root.schedule)
 
     # Print penalties
-    print(f"Debug: Penalty for Minimum Slot Usage: {soft_penalty_1}")
-    print(f"Debug: Penalty for Preferred Time Slots: {soft_penalty_2}")
-    print(f"Debug: Penalty for Preferred Time Slots: {soft_penalty_3}")
-    # Total penalty
-    total_soft_penalty = soft_penalty_1 + soft_penalty_2 + soft_penalty_3
-    print(f"Debug: Total Soft Penalties: {total_soft_penalty}")
+    # print(f"Debug: Penalty for Minimum Slot Usage: {soft_penalty_1}")
+    # print(f"Debug: Penalty for Preferred Time Slots: {soft_penalty_2}")
+    # print(f"Debug: Penalty for Preferred Time Slots: {soft_penalty_3}")
+    # # Total penalty
+    # total_soft_penalty = soft_penalty_1 + soft_penalty_2 + soft_penalty_3
+    # print(f"Debug: Total Soft Penalties: {total_soft_penalty}")
 
     return root
 
