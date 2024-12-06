@@ -16,11 +16,11 @@ class SoftConstraints:
             games_count = sum(isinstance(event, Game) for event in events)
             practices_count = sum(isinstance(event, Practice) for event in events)
             if isinstance(slot, GameSlot):
-                gamemin = slot.gamemin if hasattr(slot, "gamemin") else 0
+                gamemin = getattr(slot, "gameMin", 0)
                 practicemin = 0
             elif isinstance(slot, PracticeSlot):
                 gamemin = 0
-                practicemin = slot.practicemin if hasattr(slot, "practicemin") else 0
+                practicemin = getattr(slot, "pracMin", 0)
             else:
                 gamemin = 0
                 practicemin = 0
@@ -28,6 +28,7 @@ class SoftConstraints:
                 total_penalty += (gamemin - games_count) * self.input_parser.pengamemin
             if practices_count < practicemin:
                 total_penalty += (practicemin - practices_count) * self.input_parser.penpracticemin
+            print(f"Slot: {slot}, Games Count: {games_count}, Practices Count: {practices_count}, gamemin: {gamemin}, practicemin: {practicemin}")
         return total_penalty
 
     def check_preferred_time_slots(self, schedule):
@@ -36,12 +37,16 @@ class SoftConstraints:
             if not isinstance(events, list):
                 events = [events]
             for event in events:
-                for preference in self.input_parser.preferences:
-                    if preference.get("event") == event and preference.get("slot") == slot:
-                        preference_value = preference.get("value", 0)
-                        if preference_value < 0:
-                            total_penalty += abs(preference_value) * self.input_parser.w_pre
+                if isinstance(event, (Game, Practice)):
+                    for preference in self.input_parser.preferences:
+                        preferred_slot = f"{preference['day']}, {preference['time']}"
+                        if preference['id'] == event.id and preferred_slot == slot:
+                            preference_value = int(preference['score'])
+                            if preference_value < 0:
+                                total_penalty += abs(preference_value) * self.input_parser.w_pre
+                        print(f"Event: {event}, Slot: {slot}, Matched Preference: {preference}")
         return total_penalty
+
 
     def check_paired_events(self, schedule):
         total_penalty = 0
