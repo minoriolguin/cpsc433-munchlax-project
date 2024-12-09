@@ -5,10 +5,8 @@
 # Monica Nguyen
 # Thi Ngoc Anh Nguyen
 
-import random
 import signal
 import sys
-import time
 import traceback
 from game import Game
 from practice import Practice
