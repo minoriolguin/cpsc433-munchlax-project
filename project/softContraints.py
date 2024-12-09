@@ -70,12 +70,12 @@ class SoftConstraints:
                     elif event.id == event2_id:
                         event2_slot = slot
 
-            if event1_slot and event2_slot and event1_slot != event2_slot:
-                #print(f"Unpaired events: {event1_id} in {event1_slot} and {event2_id} in {event2_slot}")
-                penalty += self.input_parser.pen_notpaired
+            if event1_slot and event2_slot and (event1_slot.day != event2_slot.day or event1_slot.startTime != event2_slot.startTime):
+                # print(f"Unpaired events: {event1_id} in {event1_slot} and {event2_id} in {event2_slot}")
+                penalty += self.input_parser.pennotpaired
 
         #print(f"Total Paired Events Penalty: {penalty}")
-        return penalty
+        return penalty*self.input_parser.wpair
 
 
     def check_avoid_overloading_divisions(self, schedule):
