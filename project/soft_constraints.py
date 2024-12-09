@@ -60,22 +60,22 @@ class SoftConstraints:
     def eval_pair(self, schedule):
         penalty = 0 
 
+        # Preprocess the schedule
+        event_to_slot = {
+            event.id: slot for slot, event in schedule.scheduleVersion.items() if event != "$"
+        }
+
         # Iterate through the list of pairs
-        for pair in self.input_parser.pair:
-            event1_id, event2_id = pair
-            event1_slot = None
-            event2_slot = None
+        for event1_id, event2_id in self.input_parser.pair:
+            event1_slot = event_to_slot.get(event1_id)
+            event2_slot = event_to_slot.get(event2_id)
 
-            # Find the slots assigned to each event in the pair
-            for slot, event in schedule.scheduleVersion.items():
-                if event != "$":
-                    if event.id == event1_id:
-                        event1_slot = slot
-                    elif event.id == event2_id:
-                        event2_slot = slot
-
-            # If both events are scheduled but in different slots, apply a penalty
-            if event1_slot and event2_slot and event1_slot != event2_slot:
+            # Check if events are not in the same slot or are not scheduled
+            if (
+                not event1_slot
+                or not event2_slot
+                or (event1_slot.day != event2_slot.day or event1_slot.startTime != event2_slot.startTime)
+            ):
                 penalty += self.input_parser.pen_notpaired
 
         return penalty
