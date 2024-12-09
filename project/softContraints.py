@@ -41,22 +41,18 @@ class SoftConstraints:
         return isinstance(slot1, type(slot2)) and slot1.day == slot2.day and slot1.startTime == slot2.startTime
 
     def check_preferred_time_slots(self, schedule):
+        #print("Debug: Starting Preferred Time Slots Check")
         penalty = 0
 
-        #print("Debug: Starting Preferred Time Slots Check")
-        for slot, event in schedule.scheduleVersion.items():
-            if event != "$":
-                preferred_time = next(
-                    (pref for pref in self.input_parser.preferences if pref['id'] == event.id),
-                    None
-                )
+        for pref in self.input_parser.preferences:
+            for slot, event in schedule.scheduleVersion.items():
+                if (event != "$" and event.id == pref['id']):
+                    if slot.day != pref['day'] or str(slot.startTime) != str(pref['time']):
+                    #print(f"Mismatch detected: Event {event.id} assigned to {slot.day} {slot.startTime}, preferred {pref['day']} {pref['time']}")
+                        penalty += int(pref['score'])
+                        print(event)
 
-                if preferred_time is not None:
-                    if slot.day != preferred_time['day'] or str(slot.startTime) != str(preferred_time['time']):
-                        #print(f"Mismatch detected: Event {event.id} assigned to {slot.day} {slot.startTime}, preferred {preferred_time['day']} {preferred_time['time']}")
-                        penalty += int(preferred_time['score'])
-
-        return penalty
+        return penalty*self.input_parser.wpref
 
     def check_paired_events(self, schedule):
         penalty = 0
