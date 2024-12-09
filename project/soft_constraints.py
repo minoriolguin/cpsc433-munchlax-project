@@ -51,8 +51,7 @@ class SoftConstraints:
 
             # Process PracticeSlot
             elif isinstance(slot, PracticeSlot):
-                assigned_practices = len(slot.assignedPractices) if hasattr(slot, "assignedPractices") else 0
-                unfilled_practices = max(0, slot.pracMin - assigned_practices)
+                unfilled_practices = max(0, slot.pracMin - len(slot.assignedPractices))
                 if unfilled_practices > 0:
                     penalty += unfilled_practices * self.input_parser.pen_practicemin
 

@@ -5,6 +5,7 @@
 # Monica Nguyen
 # Thi Ngoc Anh Nguyen
 
+import random
 import signal
 import sys
 import time
@@ -106,23 +107,38 @@ def initialize_root(events, game_slots, practice_slots, partial_assign):
 
 # Helper function to sort the events so they aren't random, this also prioritizes the
 # evening slots and divisions starting with 9 so they can be places in evening slots first
-def reorder_events(events):
+def reorder_events(events, incompatible_map, shuffle=False):
+    """
+    Reorder events based on their incompatibility count, league, tier, and division.
+    """
     # Group events by league, tier, and division
     grouped = defaultdict(list)
     for event in events:
         team_key = (event.league, event.tier, str(event.div))
         grouped[team_key].append(event)
 
+    # Calculate incompatibility counts for prioritization
+    incompatibility_counts = {
+        event.id: len(incompatible_map.get(event.id, set())) for event in events
+    }
+
+    # Sort teams within each group by their incompatibility count
+    def sort_group(team_events):
+        return sorted(
+            team_events,
+            key=lambda e: -incompatibility_counts[e.id]  # More incompatible first
+        )
+
     # Separate teams with div=9* and others
     div_9_teams = [key for key in grouped if key[2].startswith("9")]
     other_teams = [key for key in grouped if not key[2].startswith("9")]
 
-    # Function to add events for a team (games first, then practices)
+    # Function to add sorted events for a team (games first, then practices)
     def add_team_events(team_key):
         team_events = grouped[team_key]
         games = [e for e in team_events if isinstance(e, Game)]
         practices = [e for e in team_events if isinstance(e, Practice)]
-        return games + practices
+        return sort_group(games) + sort_group(practices)
 
     # Reorder events
     reordered_events = []
@@ -130,7 +146,6 @@ def reorder_events(events):
     # Process div=9* teams
     for team_key in div_9_teams:
         league, tier, _ = team_key
-        # Collect all events for the league and tier
         for key in grouped:
             if key[0] == league and key[1] == tier:
                 reordered_events.extend(add_team_events(key))
@@ -138,16 +153,33 @@ def reorder_events(events):
     # Process remaining teams
     for team_key in other_teams:
         league, tier, _ = team_key
-        # Collect all events for the league and tier
         for key in grouped:
             if key[0] == league and key[1] == tier:
                 reordered_events.extend(add_team_events(key))
 
+    # Shuffle if enabled
+    # if shuffle:
+    #     random.shuffle(reordered_events)
+
     return reordered_events
 
+# Compatibility check function
+def check_compatibility(event1, event2):
+    global checked_pairs
 
-# Div function: enables the program to decide which slot to fill next based on 
-# the given constraints and open slots available
+    # Check if the pair has already been evaluated
+    if (event1.id, event2.id) in checked_pairs or (event2.id, event1.id) in checked_pairs:
+        return True  # Assume compatible if already checked
+
+    # Perform compatibility logic
+    compatible = True  # Replace with actual compatibility logic
+
+    # Update checked pairs
+    checked_pairs.add((event1.id, event2.id))
+
+    return compatible
+
+# prioritizes slots based on hard and soft constraints
 def prioritize_slots(event, slots, incompatible_map):
     if isinstance(event, Game):
         valid_slots = [slot for slot in slots if isinstance(slot, GameSlot)]
@@ -157,11 +189,14 @@ def prioritize_slots(event, slots, incompatible_map):
         return []
 
     # Filter out incompatible slots
-    valid_slots = [
-        slot for slot in valid_slots
-        if not (hasattr(slot, 'assigned_event') and slot.assigned_event and
-                slot.assigned_event.id in incompatible_map.get(event.id, set()))
-    ]
+    for slot in valid_slots:
+        incompatible_events = incompatible_map.get(event.id, set())
+        if hasattr(slot, 'assigned_event') and slot.assigned_event:
+            assigned_event = slot.assigned_event
+            # Perform compatibility check
+            if not check_compatibility(event, assigned_event) or assigned_event.id in incompatible_events:
+                print(f"DEBUG: Filtering out slot {slot.id} for event {event.id} due to incompatibility with {assigned_event.id}")
+                valid_slots.remove(slot)
 
     # Avoid slots with overlapping divisions within the same tier
     def has_overlapping_division(slot):
@@ -172,17 +207,23 @@ def prioritize_slots(event, slots, incompatible_map):
 
     valid_slots = [slot for slot in valid_slots if not has_overlapping_division(slot)]
 
+    # Prioritize based on how far the slot's remaining capacity is from its gameMin
+    def distance_from_game_min(slot):
+        if isinstance(slot, GameSlot):
+            return abs(slot.remaining_capacity() - slot.gameMin)  # Distance from gameMin
+        return float('inf')  # Practices don't have a gameMin
+
     # Prioritize based on heuristics
     prioritized = sorted(
         valid_slots,
         key=lambda slot: (
             event.div != 9,  # False for div 9 (higher priority)
             int(slot.startTime.split(':')[0]) < 18,  # True if start time < 18
-            -slot.remaining_capacity()  # Higher capacity first
+            distance_from_game_min(slot),  # Farther from gameMin is higher priority
+            -slot.remaining_capacity()  # Use as a tiebreaker
         )
     )
     return prioritized
-
 
 # Preprocess incompatible pairs
 def preprocess_incompatible_pairs(not_compatible):
@@ -221,7 +262,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, e
     checked_states.add(state_hash)
 
     # Reorder events for processing
-    ordered_events = reorder_events(unscheduled_events)
+    ordered_events = reorder_events(unscheduled_events, incompatible_map)
 
     for event in ordered_events:
         prioritized_slots = prioritize_slots(event, parent_slots, incompatible_map)
@@ -250,9 +291,9 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, e
 
             # Continue recursion with remaining events
             remaining_events = [e for e in unscheduled_events if e != event]
-            print(f"Debug: new schedule {node.schedule.print_schedule(current_eval_score)}")
+            print(f"DEBUG: Before recursion, schedule: {node.schedule.print_schedule(current_eval_score)}")
             build_tree(child_node, remaining_events, child_slots, check_hard_constraints, eval, incompatible_map, depth + 1)
-
+            print(f"DEBUG: After recursion, schedule: {node.schedule.print_schedule(current_eval_score)}")
             # Unassign event after exploring the branch
             new_schedule.unassign_event(event, slot)
 
