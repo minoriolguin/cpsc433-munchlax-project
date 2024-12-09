@@ -26,14 +26,14 @@ class InputParser:
         self.pair = []
         self.partial_assign = []
         self.filename = ''
-        self.w_minfilled = 0
-        self.w_pre = 0
-        self.w_pair = 0
-        self.w_secdiff = 0
+        self.wminfilled = 0
+        self.wpref = 0
+        self.wpair = 0
+        self.wsecdiff = 0
         self.pengamemin = 0
         self.penpracticemin = 0
-        self.pen_notpaired = 0
-        self.pen_section = 0
+        self.pennotpaired = 0
+        self.pensection = 0
 
     def parse_argument(self):
         # Assume that all values have to specified

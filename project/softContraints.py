@@ -41,22 +41,18 @@ class SoftConstraints:
         return isinstance(slot1, type(slot2)) and slot1.day == slot2.day and slot1.startTime == slot2.startTime
 
     def check_preferred_time_slots(self, schedule):
+        #print("Debug: Starting Preferred Time Slots Check")
         penalty = 0
 
-        #print("Debug: Starting Preferred Time Slots Check")
-        for slot, event in schedule.scheduleVersion.items():
-            if event != "$":
-                preferred_time = next(
-                    (pref for pref in self.input_parser.preferences if pref['id'] == event.id),
-                    None
-                )
+        for pref in self.input_parser.preferences:
+            for slot, event in schedule.scheduleVersion.items():
+                if (event != "$" and event.id == pref['id']):
+                    if slot.day != pref['day'] or str(slot.startTime) != str(pref['time']):
+                    #print(f"Mismatch detected: Event {event.id} assigned to {slot.day} {slot.startTime}, preferred {pref['day']} {pref['time']}")
+                        penalty += int(pref['score'])
+                        print(event)
 
-                if preferred_time is not None:
-                    if slot.day != preferred_time['day'] or str(slot.startTime) != str(preferred_time['time']):
-                        #print(f"Mismatch detected: Event {event.id} assigned to {slot.day} {slot.startTime}, preferred {preferred_time['day']} {preferred_time['time']}")
-                        penalty += int(preferred_time['score'])
-
-        return penalty
+        return penalty*self.input_parser.wpref
 
     def check_paired_events(self, schedule):
         penalty = 0
@@ -74,12 +70,12 @@ class SoftConstraints:
                     elif event.id == event2_id:
                         event2_slot = slot
 
-            if event1_slot and event2_slot and event1_slot != event2_slot:
-                #print(f"Unpaired events: {event1_id} in {event1_slot} and {event2_id} in {event2_slot}")
-                penalty += self.input_parser.pen_notpaired
+            if event1_slot and event2_slot and (event1_slot.day != event2_slot.day or event1_slot.startTime != event2_slot.startTime):
+                # print(f"Unpaired events: {event1_id} in {event1_slot} and {event2_id} in {event2_slot}")
+                penalty += self.input_parser.pennotpaired
 
         #print(f"Total Paired Events Penalty: {penalty}")
-        return penalty
+        return penalty*self.input_parser.wpair
 
 
     def check_avoid_overloading_divisions(self, schedule):
