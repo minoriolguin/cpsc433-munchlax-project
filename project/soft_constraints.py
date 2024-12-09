@@ -6,6 +6,7 @@
 # Thi Ngoc Anh Nguyen
 
 from collections import defaultdict
+from itertools import combinations
 from input_parser import InputParser
 from practice import Practice
 from game import Game
@@ -27,19 +28,18 @@ class SoftConstraints:
         
     # Uses pen_gamemin and pen_practice min to compute penalty
     def eval_min_filled(self, schedule):
-        penalty = 0 
+        penalty = 0
         
         # Iterate through the scheduled slots
         for slot in schedule.scheduleVersion:
-            # If game slot
             if isinstance(slot, GameSlot):
-                unfilled_games = slot.gameMin - len(slot.assignedGames) # check if theres under filled games (less than gameMin)
+                unfilled_games = slot.gameMin - len(slot.assignedGames)
                 if unfilled_games > 0: 
-                    penalty+= unfilled_games * self.input_parser.pen_gamemin # add penalty                
+                    penalty += unfilled_games * self.input_parser.pen_gamemin
             if isinstance(slot, PracticeSlot):
-                unfilled_practices = slot.pracMin - len(slot.assignedPractices) # check if theres under filled practices (less than gameMax)
+                unfilled_practices = slot.pracMin - len(slot.assignedPractices)
                 if unfilled_practices > 0:
-                    penalty+= unfilled_practices * self.input_parser.pen_practicemin # add penalty
+                    penalty += unfilled_practices * self.input_parser.pen_practicemin
         return penalty
 
     # Uses the individual references in input file under "Preferences"
@@ -88,18 +88,25 @@ class SoftConstraints:
     # Uses pen_section to calculate penalty
     def eval_sec_diff(self, schedule):
         penalty = 0
-        tier_map = defaultdict(list)  # Use defaultdict to avoid initialization issues
+        tier_map = defaultdict(list)  # Group by slot
 
-        # Group divisions by slot (identified by name, day, and start time)
+        # Group divisions by slot (consider tier + division)
         for slot, event in schedule.scheduleVersion.items():
             if event != "$" and isinstance(event, Game):
-                tier_map[(slot.id, slot.day, slot.startTime)].append(event.div)
+                tier_div = (event.tier, event.div)
+                tier_map[(slot.id, slot.day, slot.startTime)].append(tier_div)
 
-        # Check for overlapping divisions in the same slot
-        for (id, day, start_time), divisions in tier_map.items():
-            if len(divisions) > 1:  # More than one division in the same slot
-                # Add penalty for each overlapping division
-                penalty += (len(divisions) - 1) * self.input_parser.pen_section
+        # Penalize overlapping divisions within the same tier
+        for (slot_id, day, start_time), tier_divisions in tier_map.items():
+            overlapping_tiers = defaultdict(int)
+            for tier, div in tier_divisions:
+                overlapping_tiers[tier] += 1  # Count divisions per tier
+
+            for tier, count in overlapping_tiers.items():
+                if count > 1:  # More than one division from the same tier
+                    penalty += (count - 1) * self.input_parser.pen_section
+                    print(f"DEBUG: Overlapping divisions in slot {day}, {start_time}, tier {tier}: {count} divisions, penalty: {penalty}")
 
         return penalty
+
 

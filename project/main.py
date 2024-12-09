@@ -163,27 +163,28 @@ def prioritize_slots(event, slots, incompatible_map):
                 slot.assigned_event.id in incompatible_map.get(event.id, set()))
     ]
 
-    # Calculate whether the slot meets the game_min constraint
-    def meets_game_min(slot):
+    # Avoid slots with overlapping divisions within the same tier
+    def has_overlapping_division(slot):
         if isinstance(slot, GameSlot):
-            return slot.remaining_capacity() >= slot.gameMin
-        if isinstance(slot, PracticeSlot):
-            return slot.remaining_capacity() >= slot.pracMin
-        return True
+            current_tier_divisions = [(game.tier, game.div) for game in slot.assignedGames]
+            return (event.tier, event.div) in current_tier_divisions  # Check for same tier and division overlap
+        return False
 
+    valid_slots = [slot for slot in valid_slots if not has_overlapping_division(slot)]
+
+    # Prioritize based on heuristics
     prioritized = sorted(
         valid_slots,
         key=lambda slot: (
             event.div != 9,  # False for div 9 (higher priority)
             int(slot.startTime.split(':')[0]) < 18,  # True if start time < 18
-            -slot.remaining_capacity(),  # Higher capacity first
-            not meets_game_min(slot)  # Prioritize slots that help meet game_min
+            -slot.remaining_capacity()  # Higher capacity first
         )
     )
-    #print(f"DEBUG: Prioritized slots: {[slot.id for slot in prioritized]}")
     return prioritized
 
 
+# Preprocess incompatible pairs
 def preprocess_incompatible_pairs(not_compatible):
     incompatible_map = defaultdict(set)
     for pair in not_compatible:
@@ -191,7 +192,8 @@ def preprocess_incompatible_pairs(not_compatible):
         incompatible_map[pair[1]].add(pair[0])
     return incompatible_map
 
-# # And-Tree build
+
+# And-Tree build
 def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, eval, incompatible_map, depth=0):
     global best_schedule, best_eval_score, best_schedule_is_complete
     if depth > MAX_DEPTH:
@@ -199,6 +201,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, e
 
     current_eval_score = eval(node.schedule)
     if not unscheduled_events:
+        # If all events are scheduled
         if check_hard_constraints(node.schedule):
             node.sol = "yes"
             if not best_schedule_is_complete or current_eval_score < best_eval_score:
@@ -206,43 +209,51 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, e
                 best_schedule = node.schedule.copy_schedule()
                 best_schedule_is_complete = True
     else:
+        # Save best partial schedule
         if not best_schedule_is_complete:
             best_eval_score = current_eval_score
             best_schedule = node.schedule.copy_schedule()
 
+    # Check for already-visited states
     state_hash = hash(frozenset(node.schedule.scheduleVersion.items()))
     if state_hash in checked_states:
         return
     checked_states.add(state_hash)
 
+    # Reorder events for processing
     ordered_events = reorder_events(unscheduled_events)
 
     for event in ordered_events:
-        prioritized_slots = [slot for slot in parent_slots if not slot.is_full()]
+        prioritized_slots = prioritize_slots(event, parent_slots, incompatible_map)
         for slot in prioritized_slots:
             if isinstance(event, Game) and not isinstance(slot, GameSlot):
                 continue
             if isinstance(event, Practice) and not isinstance(slot, PracticeSlot):
                 continue
 
+            # Copy current state
             child_slots = [s.copy() for s in parent_slots]
             new_schedule = node.schedule.copy_schedule()
+
+            # Assign the event to the slot
             new_schedule.assign_event(event, slot)
 
+            # Check the new schedule against hard constraints
             if not check_hard_constraints(new_schedule):
+                # Unassign if invalid
+                new_schedule.unassign_event(event, slot)
                 continue
 
+            # Create a new child node
             child_node = Node(schedule=new_schedule, sol="?")
             node.add_child(child_node)
 
-            if not node.children:
-                return
-
+            # Continue recursion with remaining events
             remaining_events = [e for e in unscheduled_events if e != event]
             build_tree(child_node, remaining_events, child_slots, check_hard_constraints, eval, incompatible_map, depth + 1)
 
-            new_schedule.unassign_event(event, slot)  # Reset slot after backtracking
-
+            # Unassign event after exploring the branch
+            new_schedule.unassign_event(event, slot)
 
 
 # Main method
@@ -269,7 +280,7 @@ def main():
     softConstraints = SoftConstraints(parser)
     
     try:
-        # start = time.time()
+
         build_tree(
             root, 
             unscheduled_events, 
@@ -278,7 +289,7 @@ def main():
             softConstraints.eval, 
             incompatible_map
             )
-        # end = time.time()
+
     except Exception as e:
         print(f"An error occurred: {e}")
         print(traceback.format_exc())
@@ -288,9 +299,6 @@ def main():
         else:
             print("No valid schedule found before error.")
         return
-
-    # elapsed_time_minutes = (end - start) / 60
-    # print(f"Time to run: {elapsed_time_minutes}")
 
     if best_schedule:
         print("\nBest schedule found: \n")
