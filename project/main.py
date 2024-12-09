@@ -18,7 +18,7 @@ from scheduler import Scheduler
 from node import Node
 from collections import defaultdict
 from hardConstraints import HardConstraints
-from alt_soft_constraints import SoftConstraints
+from soft_constraints import SoftConstraints
 
 # Global variables
 softConstraints = None
