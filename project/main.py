@@ -108,9 +108,6 @@ def initialize_root(events, game_slots, practice_slots, partial_assign):
 # Helper function to sort the events so they aren't random, this also prioritizes the
 # evening slots and divisions starting with 9 so they can be places in evening slots first
 def reorder_events(events, incompatible_map, shuffle=False):
-    """
-    Reorder events based on their incompatibility count, league, tier, and division.
-    """
     # Group events by league, tier, and division
     grouped = defaultdict(list)
     for event in events:
@@ -164,20 +161,15 @@ def reorder_events(events, incompatible_map, shuffle=False):
     return reordered_events
 
 # Compatibility check function
-def check_compatibility(event1, event2):
-    global checked_pairs
-
-    # Check if the pair has already been evaluated
-    if (event1.id, event2.id) in checked_pairs or (event2.id, event1.id) in checked_pairs:
-        return True  # Assume compatible if already checked
-
-    # Perform compatibility logic
-    compatible = True  # Replace with actual compatibility logic
-
-    # Update checked pairs
-    checked_pairs.add((event1.id, event2.id))
-
-    return compatible
+def check_compatibility(event1, event2, incompatible_map):
+    # Check for precomputed incompatibility
+    if event1.id in incompatible_map.get(event2.id, set()):
+        return False
+    if event2.id in incompatible_map.get(event1.id, set()):
+        return False
+    
+    # Add any additional compatibility logic here
+    return True
 
 # prioritizes slots based on hard and soft constraints
 def prioritize_slots(event, slots, incompatible_map):
