@@ -30,10 +30,10 @@ class Scheduler:
     def unassign_event(self, event, slot):
         # Update the internal state of the slot
         if isinstance(slot, GameSlot):
-            print(f"DEBUG: Unassigning event {event.id} from slot {slot.id}.")
+            # print(f"DEBUG: Unassigning event {event.id} from slot {slot.id}.")
             slot.assignedGames.remove(event)
         elif isinstance(slot, PracticeSlot):
-            print(f"DEBUG: Unassigning event {event.id} from slot {slot.id}.")
+            # print(f"DEBUG: Unassigning event {event.id} from slot {slot.id}.")
             slot.assignedPractices.remove(event)
             
 

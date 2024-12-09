@@ -250,6 +250,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, e
 
             # Continue recursion with remaining events
             remaining_events = [e for e in unscheduled_events if e != event]
+            print(f"Debug: new schedule {node.schedule.print_schedule(current_eval_score)}")
             build_tree(child_node, remaining_events, child_slots, check_hard_constraints, eval, incompatible_map, depth + 1)
 
             # Unassign event after exploring the branch

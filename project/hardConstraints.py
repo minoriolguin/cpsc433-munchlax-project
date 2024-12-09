@@ -35,7 +35,7 @@ class HardConstraints:
             print(f"DEBUG: Failed over_practicemax")
             return False
         if self.notcompatible(schedule):
-            print(f"DEBUG: Failed notcompatible")
+            # print(f"DEBUG: Failed notcompatible")
             return False
         if self.unwanted(schedule):
             print(f"DEBUG: Failed unwanted")

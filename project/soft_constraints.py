@@ -26,21 +26,41 @@ class SoftConstraints:
             self.eval_sec_diff(schedule) * self.input_parser.w_secdiff
         )
         
-    # Uses pen_gamemin and pen_practice min to compute penalty
+    # Helper function to compare slots by name and time
+    def is_same_slot(self, slot1, slot2):
+        return (
+            slot1.day == slot2.day and
+            slot1.startTime == slot2.startTime
+        )
+
+    # Uses pen_gamemin and pen_practicemin to compute penalty
     def eval_min_filled(self, schedule):
         penalty = 0
-        
-        # Iterate through the scheduled slots
-        for slot in schedule.scheduleVersion:
+        processed_slots = []  # To track processed slots
+
+        for slot, event in schedule.scheduleVersion.items():
+            # Skip if this slot has already been processed
+            if any(self.is_same_slot(slot, processed) for processed in processed_slots):
+                continue
+
+            # Process GameSlot
             if isinstance(slot, GameSlot):
-                unfilled_games = slot.gameMin - len(slot.assignedGames)
-                if unfilled_games > 0: 
+                unfilled_games = max(0, slot.gameMin - len(slot.assignedGames))
+                if unfilled_games > 0:
                     penalty += unfilled_games * self.input_parser.pen_gamemin
-            if isinstance(slot, PracticeSlot):
-                unfilled_practices = slot.pracMin - len(slot.assignedPractices)
+
+            # Process PracticeSlot
+            elif isinstance(slot, PracticeSlot):
+                assigned_practices = len(slot.assignedPractices) if hasattr(slot, "assignedPractices") else 0
+                unfilled_practices = max(0, slot.pracMin - assigned_practices)
                 if unfilled_practices > 0:
                     penalty += unfilled_practices * self.input_parser.pen_practicemin
+
+            # Add slot to processed list
+            processed_slots.append(slot)
+
         return penalty
+
 
     # Uses the individual references in input file under "Preferences"
     def eval_pref(self, schedule):
