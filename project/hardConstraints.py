@@ -28,27 +28,24 @@ class HardConstraints:
 
     # function to check if all hard constraints are satisfied
     def check_hard_constraints(self, schedule):
-
         if self.over_gamemax(schedule):
+            print(f"DEBUG: Failed over_gamemax")
             return False
-
         if self.over_practicemax(schedule):
+            print(f"DEBUG: Failed over_practicemax")
             return False
-
         if self.notcompatible(schedule):
+            print(f"DEBUG: Failed notcompatible")
             return False
-
         if self.unwanted(schedule):
+            print(f"DEBUG: Failed unwanted")
             return False
-
-        # city of calgary constraints:
         if self.check_overlapping(schedule):
+            print(f"DEBUG: Failed overlapping")
             return False
-
         if self.evening_divisions(schedule):
+            print(f"DEBUG: Failed evening_divisions")
             return False
-
-        # at this point all the hard constraints have passed
         return True
 
     def over_gamemax(self, schedule): # can probably be combined with over_practicemax
@@ -133,7 +130,7 @@ class HardConstraints:
                         end2 = start2 + 1
                     elif d2 == "TU":
 
-                        if is_game(incompatable_pair[1]):
+                        if is_game(incompatible_pair[1]):
                             end2 = start2 + 1.5
                         else:
                             end2 = start2 + 2

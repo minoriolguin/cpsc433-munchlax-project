@@ -18,7 +18,7 @@ from scheduler import Scheduler
 from node import Node
 from collections import defaultdict
 from hardConstraints import HardConstraints
-from softConstraints import SoftConstraints
+from alt_soft_constraints import SoftConstraints
 
 # Global variables
 softConstraints = None
@@ -27,7 +27,7 @@ best_eval_score = float('inf')
 best_schedule_is_complete = False
 slots = []
 checked_states = set()
-MAX_DEPTH = 100
+MAX_DEPTH = 500
 
 # Signal handler to handle early stops
 def signal_handler(sig, frame):
@@ -144,6 +144,7 @@ def reorder_events(events):
                 reordered_events.extend(add_team_events(key))
 
     return reordered_events
+
 
 # Div function: enables the program to decide which slot to fill next based on 
 # the given constraints and open slots available

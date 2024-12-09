@@ -27,9 +27,9 @@ class Scheduler:
             slot.assignedPractices.append(event)
         self.scheduleVersion[slot] = event
 
-    # def remove_event(self, slot):
-    #     if slot in self.scheduleVersion:
-    #         self.scheduleVersion[slot] = "$"
+    def remove_event(self, slot):
+        if slot in self.scheduleVersion:
+            self.scheduleVersion[slot] = "$"
 
     def get_schedule(self):
         return self.scheduleVersion
