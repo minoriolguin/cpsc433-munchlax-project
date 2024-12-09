@@ -46,19 +46,14 @@ class SoftConstraints:
     def eval_pref(self, schedule):
         penalty = 0
 
-        preferences_map = {
-            pref['id']: pref for pref in self.input_parser.preferences
-        }
-
-        # Iterate through the schedule to evaluate preferences
-        for slot, event in schedule.scheduleVersion.items(): 
-            if event != "$":
-                preferred_time = preferences_map.get(event.id)
-                if preferred_time:  # if there's a preference for this event
-                    if slot.day != preferred_time['day'] or str(slot.startTime) != str(preferred_time['time']):
-                        # add penalty for mismatched day or time
-                        penalty += int(preferred_time['score'])
-
+        for pref in self.input_parser.preferences:
+            for slot, event in schedule.scheduleVersion.items():
+                if (event != "$" and event.id == pref['id']):
+                    if slot.day != pref['day'] or str(slot.startTime) != str(pref['time']):
+                    #print(f"Mismatch detected: Event {event.id} assigned to {slot.day} {slot.startTime}, preferred {pref['day']} {pref['time']}")
+                        penalty += int(pref['score'])
+                        # print(event)
+        # print(f'penalty {penalty} w_penalty {self.input_parser.w_pref} res {penalty*self.input_parser.w_pref}')
         return penalty
 
     # Uses pen_notpaired to calculate penalty
