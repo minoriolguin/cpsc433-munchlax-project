@@ -25,6 +25,15 @@ class HardConstraints:
                 else:
                     if game.league == practice.league and game.tier == practice.tier and game.div == practice.div:
                         input_parser.not_compatible.append([game.id, practice.id])
+        
+        levels = ["U15", "U16", "U17", "U19"]
+        for game in input_parser.games:
+            u_level = game.tier[0:3]
+            if u_level in levels:
+                for game_incompatable in input_parser.games:
+                    u_level2 = game_incompatable.tier[0:3]
+                    if u_level2 in levels:
+                        input_parser.not_compatible.append([game.id, game_incompatable.id])
 
     # function to check if all hard constraints are satisfied
     def check_hard_constraints(self, schedule):
@@ -40,9 +49,9 @@ class HardConstraints:
         if self.unwanted(schedule):
             print(f"DEBUG: Failed unwanted")
             return False
-        if self.check_overlapping(schedule):
-            print(f"DEBUG: Failed overlapping")
-            return False
+        # if self.check_overlapping(schedule):
+        #     print(f"DEBUG: Failed overlapping")
+        #     return False
         if self.evening_divisions(schedule):
             print(f"DEBUG: Failed evening_divisions")
             return False
@@ -177,26 +186,26 @@ class HardConstraints:
 
         return False
 
-    def check_overlapping(self, schedule):
-        levels = ["U15", "U16", "U17", "U19"]
-        tier_times = {}
-        for slot in schedule.scheduleVersion.keys():
-            if isinstance(slot, GameSlot):
-                for game in slot.assignedGames:
-                    u_level = game.tier[0:3]
-                    if u_level in levels:
-                        if game.tier in tier_times.keys():
-                            if (slot.day, slot.startTime) in tier_times[game.tier]:
-                                # overlap found, hard constraint failed
-                                return True
-                            else:
-                                # keep track of times with U15/U16/U17/U19 games assigned to them
-                                tier_times[game.tier].append((slot.day, slot.startTime))
-                        else:
-                            # keep track of tiers
-                            tier_times[game.tier] = [(slot.day, slot.startTime)]
+    # def check_overlapping(self, schedule):
+    #     levels = ["U15", "U16", "U17", "U19"]
+    #     tier_times = {}
+    #     for slot in schedule.scheduleVersion.keys():
+    #         if isinstance(slot, GameSlot):
+    #             for game in slot.assignedGames:
+    #                 u_level = game.tier[0:3]
+    #                 if u_level in levels:
+    #                     if game.tier in tier_times.keys():
+    #                         if (slot.day, slot.startTime) in tier_times[game.tier]:
+    #                             # overlap found, hard constraint failed
+    #                             return True
+    #                         else:
+    #                             # keep track of times with U15/U16/U17/U19 games assigned to them
+    #                             tier_times[game.tier].append((slot.day, slot.startTime))
+    #                     else:
+    #                         # keep track of tiers
+    #                         tier_times[game.tier] = [(slot.day, slot.startTime)]
 
-        return False
+    #     return False
 
 def is_game(id):
     if "PRC" in id.split() or "OPN" in id.split():
