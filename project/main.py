@@ -191,23 +191,14 @@ def preprocess_incompatible_pairs(not_compatible):
         incompatible_map[pair[1]].add(pair[0])
     return incompatible_map
 
-# And-Tree build
+# # And-Tree build
 def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, eval, incompatible_map, depth=0):
     global best_schedule, best_eval_score, best_schedule_is_complete
-    # print(f"DEBUG: Building tree at depth {depth}, unscheduled_events={len(unscheduled_events)}")
-    # print(f"current depth: {depth}")
     if depth > MAX_DEPTH:
-        # print("Max depth reached, terminating this branch.")
         return
 
     current_eval_score = eval(node.schedule)
-    # Base case: All events scheduled
     if not unscheduled_events:
-        # Complete schedule
-        # node.schedule.print_schedule(current_eval_score)
-
-        # print(f"DEBUG: current eval score {current_eval_score}")
-        # print(f"DEBUG: best schedule complete? {best_schedule_is_complete}")
         if check_hard_constraints(node.schedule):
             node.sol = "yes"
             if not best_schedule_is_complete or current_eval_score < best_eval_score:
@@ -215,59 +206,43 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, e
                 best_schedule = node.schedule.copy_schedule()
                 best_schedule_is_complete = True
     else:
-        # Partial schedule
-        # print(f"DEBUG: in unscheduled else")
-        # print(f"DEBUG: Best eval score is {best_eval_score}")
-        # if not best_schedule_is_complete and current_eval_score < best_eval_score:
         if not best_schedule_is_complete:
-            
-            # print(f"DEBUG: Saving best partial...")
             best_eval_score = current_eval_score
             best_schedule = node.schedule.copy_schedule()
 
-    # Check for already-visited states
     state_hash = hash(frozenset(node.schedule.scheduleVersion.items()))
     if state_hash in checked_states:
-        # print(f"Skipping already-checked state at depth {depth}.")
         return
     checked_states.add(state_hash)
 
-    # Reorder events and maintain the order as a flat list
     ordered_events = reorder_events(unscheduled_events)
-    # print(f"events remaining: {len(ordered_events)}")
 
     for event in ordered_events:
-        prioritized_slots = prioritize_slots(event, parent_slots, incompatible_map)
-        #print(f"DEBUG: Event {event.id} has prioritized slots: {[slot.id for slot in prioritized_slots]}")
+        prioritized_slots = [slot for slot in parent_slots if not slot.is_full()]
         for slot in prioritized_slots:
-            # Skip incompatible slot types
             if isinstance(event, Game) and not isinstance(slot, GameSlot):
                 continue
             if isinstance(event, Practice) and not isinstance(slot, PracticeSlot):
                 continue
 
-            # Create a new node and copy current state
             child_slots = [s.copy() for s in parent_slots]
             new_schedule = node.schedule.copy_schedule()
             new_schedule.assign_event(event, slot)
 
-            # Check the new schedule with hard constraints
             if not check_hard_constraints(new_schedule):
-                #print(f"DEBUG: Hard constraints failed for event {event.id} in slot {slot.id}")
                 continue
 
-            # Create a new child node if valid
             child_node = Node(schedule=new_schedule, sol="?")
             node.add_child(child_node)
 
-            # Prune branches with no children
             if not node.children:
-                # print(f"Pruning branch at depth {depth}, no children.")
                 return
 
-            # Continue recursion with remaining events
             remaining_events = [e for e in unscheduled_events if e != event]
             build_tree(child_node, remaining_events, child_slots, check_hard_constraints, eval, incompatible_map, depth + 1)
+
+            new_schedule.unassign_event(event, slot)  # Reset slot after backtracking
+
 
 
 # Main method

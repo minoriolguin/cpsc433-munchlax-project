@@ -27,9 +27,32 @@ class Scheduler:
             slot.assignedPractices.append(event)
         self.scheduleVersion[slot] = event
 
-    def remove_event(self, slot):
-        if slot in self.scheduleVersion:
-            self.scheduleVersion[slot] = "$"
+    def unassign_event(self, event, slot):
+        # Ensure the event and slot exist in the schedule
+        if slot not in self.scheduleVersion:
+            print(f"DEBUG: Slot {slot.id} not found in schedule.")
+            return False
+
+        # Check if the slot contains the event to be unassigned
+        assigned_event = self.scheduleVersion.get(slot, "$")
+        if assigned_event != event:
+            print(f"DEBUG: Event {event.id} not assigned to slot {slot.id}.")
+            return False
+
+        # Unassign the event from the slot
+        self.scheduleVersion[slot] = "$"  # Mark slot as unassigned
+
+        # Update slot's internal state
+        if isinstance(slot, GameSlot):
+            slot.assignedGames.remove(event)
+        elif isinstance(slot, PracticeSlot):
+            slot.assignedPractices.remove(event)
+
+        # Optionally, log the unassignment
+        # print(f"DEBUG: Event {event.id} unassigned from slot {slot.id}.")
+        return True
+
+            
 
     def get_schedule(self):
         return self.scheduleVersion
