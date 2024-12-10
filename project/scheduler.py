@@ -15,6 +15,7 @@ class Scheduler:
         self.scheduleVersion = {}
         self.events = events if events is not None else []
         self.scheduled_events = []
+        self.slot_to_events = {}
 
     def add_slot(self, slot):
         if slot not in self.scheduleVersion:
@@ -27,6 +28,20 @@ class Scheduler:
             slot.assignedPractices.append(event)
         self.scheduleVersion[slot] = event
 
+        # update slot to events and event to slots
+        if isinstance(slot, PracticeSlot):
+            if "prc" + slot.id not in self.slot_to_events.keys():
+                self.slot_to_events["prc" + slot.id] = [event.id]
+            else:
+                self.slot_to_events["prc" + slot.id].append(event.id)
+            # self.event_to_slot[event.id] = "prc" + slot.id
+        else:
+            if "game" + slot.id not in self.slot_to_events.keys():
+                self.slot_to_events["game" + slot.id] = [event.id]
+            else:
+                self.slot_to_events["game" + slot.id].append(event.id)
+            # self.event_to_slot[event.id] = "game" + slot.id
+
     def unassign_event(self, event, slot):
         # Update the internal state of the slot
         if isinstance(slot, GameSlot):
@@ -35,6 +50,17 @@ class Scheduler:
         elif isinstance(slot, PracticeSlot):
             # print(f"DEBUG: Unassigning event {event.id} from slot {slot.id}.")
             slot.assignedPractices.remove(event)
+        
+        # update slot to events and event to slots
+        if isinstance(slot, PracticeSlot):
+            if "prc" + slot.id in self.slot_to_events.keys():
+                # self.slot_to_events["prc" + slot.id].append(event.id)
+                self.slot_to_events["prc" + slot.id] = [e for e in self.slot_to_events["prc" + slot.id] if e != event.id]
+            # self.event_to_slot[event.id] = "prc" + slot.id
+        else:
+            if "game" + slot.id in self.slot_to_events.keys():
+                self.slot_to_events["game" + slot.id] = [e for e in self.slot_to_events["game" + slot.id] if e != event.id]
+            # self.event_to_slot[event.id] = "game" + slot.id
             
 
     def get_schedule(self):
@@ -57,4 +83,5 @@ class Scheduler:
     def copy_schedule(self):
         new_schedule = Scheduler(events=self.events)
         new_schedule.scheduleVersion = self.scheduleVersion.copy()
+        new_schedule.slot_to_events = self.slot_to_events.copy()
         return new_schedule

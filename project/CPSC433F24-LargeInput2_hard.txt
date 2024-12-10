@@ -1345,3 +1345,4 @@ Pair:
 CMSA U12T1 DIV 01, CMSA U13T1 DIV 01
 
 Partial assignments:
+CSSC O19T1 DIV 95, TU, 18:30
