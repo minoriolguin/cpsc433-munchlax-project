@@ -481,7 +481,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, e
     # Process each event
     for event in ordered_events:
         print()
-        node.schedule.print_schedule(0)
+        # node.schedule.print_schedule(0)
         print()
         # print(event)
         # print(ordered_events)
@@ -649,12 +649,12 @@ def main():
 
     except Exception as e:
         print(f"An error occurred: {e}")
-        print(traceback.format_exc())
-        if best_schedule:
-            print("\nBest schedule found before error: \n")
-            best_schedule.print_schedule(best_eval_score)
-        else:
-            print("No valid schedule found before error.")
+        # # print(traceback.format_exc())
+        # if best_schedule:
+        #     print("\nBest schedule found before error: \n")
+        #     best_schedule.print_schedule(best_eval_score)
+        # else:
+        #     print("No valid schedule found before error.")
         return
     
     # while not best_schedule:
@@ -680,11 +680,11 @@ def main():
     #         return
 
 
-    if best_schedule:
-        print("\nBest schedule found: \n")
-        best_schedule.print_schedule(best_eval_score)
-    else:
-        print("No valid schedule found.")
+    # if best_schedule:
+    #     print("\nBest schedule found: \n")
+    #     best_schedule.print_schedule(best_eval_score)
+    # else:
+    #     print("No valid schedule found.")
         
     output_file_path = os.path.join(os.getcwd(), "output_" + os.path.basename(parser.filename))
     with open(output_file_path, "w") as file:
