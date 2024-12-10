@@ -22,6 +22,7 @@ from soft_constraints import SoftConstraints
 
 # Global variables
 iteration_count = 0
+unscheduled_events_count = float('inf')
 softConstraints = None
 best_schedule = None
 best_eval_score = float('inf')
@@ -228,7 +229,7 @@ def preprocess_incompatible_pairs(not_compatible):
 
 # And-Tree build
 def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, eval_f, incompatible_map, depth=0):
-    global best_schedule, best_eval_score, best_schedule_is_complete, iteration_count
+    global best_schedule, best_eval_score, best_schedule_is_complete, iteration_count, unscheduled_events_count
     
     if depth > MAX_DEPTH:
         return
@@ -250,7 +251,8 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, e
     else:
         # Save best partial schedule
         if not best_schedule_is_complete:
-            # if current_eval_score < best_eval_score:
+            if len(unscheduled_events) < unscheduled_events_count:
+                unscheduled_events_count = len(unscheduled_events)
                 best_eval_score = current_eval_score
                 best_schedule = node.schedule.copy_schedule()
                 node.schedule.print_schedule(current_eval_score)
