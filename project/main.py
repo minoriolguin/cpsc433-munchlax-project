@@ -29,6 +29,9 @@ best_eval_score = float('inf')
 best_schedule_is_complete = False
 checked_states = set()
 MAX_DEPTH = 500
+MIN_DEPTH = 100
+MAX_ATTEMPTS = 10
+current_attempts = 0
 
 # Signal handler to handle early stops
 def signal_handler(sig, frame):
@@ -47,6 +50,10 @@ signal.signal(signal.SIGINT, signal_handler)
 
 # Initialize And-Tree root
 def initialize_root(events, game_slots, practice_slots, partial_assign):
+    global current_attempts
+
+    current_attempts = 0
+
     root_schedule = Scheduler(events=events)
 
     # Check if game slot TU at 11:00 AM is in the file
@@ -368,6 +375,13 @@ def preprocess_incompatible_pairs(not_compatible):
 
 # And-Tree build
 def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, eval_f, incompatible_map, depth=0):
+    # global current_attempts
+
+    # if current_attempts >= MAX_ATTEMPTS and depth < MIN_DEPTH:
+    #     return
+        
+    # current_attempts += 1
+
     global best_schedule, best_eval_score, best_schedule_is_complete
     print("DEPTH:", depth)
     if depth > MAX_DEPTH:
@@ -615,6 +629,29 @@ def main():
         else:
             print("No valid schedule found before error.")
         return
+    
+    # while not best_schedule:
+    #     try:
+
+    #         build_tree(
+    #             root, 
+    #             unscheduled_events, 
+    #             slots, 
+    #             hardConstraints.check_hard_constraints, 
+    #             softConstraints.eval, 
+    #             incompatible_map
+    #             )
+
+    #     except Exception as e:
+    #         print(f"An error occurred: {e}")
+    #         print(traceback.format_exc())
+    #         if best_schedule:
+    #             print("\nBest schedule found before error: \n")
+    #             best_schedule.print_schedule(best_eval_score)
+    #         else:
+    #             print("No valid schedule found before error.")
+    #         return
+
 
     if best_schedule:
         print("\nBest schedule found: \n")
