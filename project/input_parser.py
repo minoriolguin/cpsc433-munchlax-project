@@ -124,6 +124,22 @@ class InputParser:
         self.parse_argument()
         self.parse_input_file()
 
+        for game in self.games:
+            if game.league == "CMSA" and game.tier == "U13T1":
+                special_practice = Practice("CMSA U13T1S")
+                self.practices.append(special_practice)
+                self.not_compatible.append([game.id, special_practice.id])
+                self.partial_assign.append({'id': "CMSA U13T1S", 'day': 'TU', 'time': '18:00'})
+                break
+
+        for game in self.games:
+            if game.league == "CMSA" and game.tier == "U12T1":
+                special_practice = Practice("CMSA U12T1S")
+                self.practices.append(special_practice)
+                self.not_compatible.append([game.id, special_practice.id])
+                self.partial_assign.append({'id': "CMSA U12T1S", 'day': 'TU', 'time': '18:00'})
+                break
+
         ## ------ DEBUG ------ ##
         # print(self.name)
         # print(self.gameSlots)
