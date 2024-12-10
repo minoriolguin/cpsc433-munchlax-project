@@ -18,48 +18,64 @@ class SoftConstraints:
         self.input_parser = input_parser
 
     # calculates the total eval value
-    def eval(self, schedule):
+    def eval(self, current_slots, schedule):
         return (
-            self.eval_min_filled(schedule) * self.input_parser.w_minfilled + 
+            self.eval_min_filled(current_slots, schedule) * self.input_parser.w_minfilled + 
             self.eval_pref(schedule) * self.input_parser.w_pref + 
             self.eval_pair(schedule) * self.input_parser.w_pair + 
             self.eval_sec_diff(schedule) * self.input_parser.w_secdiff
         )
         
-    # Helper function to compare slots by name and time
     def is_same_slot(self, slot1, slot2):
+        if not hasattr(slot1, 'day') or not hasattr(slot2, 'day'):
+            print(f"Invalid slot comparison: slot1={slot1}, slot2={slot2}")
+            return False
         return (
             slot1.day == slot2.day and
             slot1.startTime == slot2.startTime
         )
 
+            
     # Uses pen_gamemin and pen_practicemin to compute penalty
-    def eval_min_filled(self, schedule):
+    def eval_min_filled(self, current_slots, schedule):
         penalty = 0
-        processed_slots = []  # To track processed slots
 
-        for slot, event in schedule.scheduleVersion.items():
-            # Skip if this slot has already been processed
-            if any(self.is_same_slot(slot, processed) for processed in processed_slots):
-                continue
+        for slot in current_slots:
+            # Print debug information for current slot
+            print(f"Evaluating slot: {slot}")
 
-            # Process GameSlot
+            # Initialize counters for games and practices
+            assigned_games = []
+            assigned_practices = []
+
+            # Iterate through scheduleVersion to collect assigned events for the slot
+            for assigned_slot, event in schedule.scheduleVersion.items():
+                # Skip invalid entries
+                if event == "$":
+                    continue
+
+                # Check if the slot matches and collect assigned events
+                if self.is_same_slot(slot, assigned_slot):
+                    if isinstance(event, Game):
+                        assigned_games.append(event)
+                    elif isinstance(event, Practice):
+                        assigned_practices.append(event)
+
+            # Update slot's assigned events (useful for further evaluation)
             if isinstance(slot, GameSlot):
+                slot.assignedGames = assigned_games
                 unfilled_games = max(0, slot.gameMin - len(slot.assignedGames))
                 if unfilled_games > 0:
                     penalty += unfilled_games * self.input_parser.pen_gamemin
+                print(f"Assigned games: {slot.assignedGames}, Penalty: {penalty}")
 
-            # Process PracticeSlot
             elif isinstance(slot, PracticeSlot):
+                slot.assignedPractices = assigned_practices
                 unfilled_practices = max(0, slot.pracMin - len(slot.assignedPractices))
                 if unfilled_practices > 0:
                     penalty += unfilled_practices * self.input_parser.pen_practicemin
-
-            # Add slot to processed list
-            processed_slots.append(slot)
-
+                print(f"Assigned practices: {slot.assignedPractices}, Penalty: {penalty}")
         return penalty
-
 
     # Uses the individual references in input file under "Preferences"
     def eval_pref(self, schedule):
