@@ -1,3 +1,10 @@
+# CPSC 433 - Artificial Intelligence - Fall 2024
+# Aditi Yadav
+# Jaden Myers
+# Minori Olguin
+# Monica Nguyen
+# Thi Ngoc Anh Nguyen
+
 class Game:
     def __init__(self, rawLine):
         line = rawLine.split(' ')

@@ -1,0 +1,7 @@
+
+.vscode/settings.json
+*.pyc
+.DS_Store
+__pycache__/
+debugLog
+.DS_Store
