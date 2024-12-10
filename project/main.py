@@ -29,7 +29,7 @@ best_eval_score = float('inf')
 best_schedule_is_complete = False
 checked_states = set()
 MAX_DEPTH = 500
-MAX_ITERATIONS = 100_000
+MAX_ITERATIONS = 10_000
 
 # Signal handler to handle early stops
 def signal_handler(sig, frame):
