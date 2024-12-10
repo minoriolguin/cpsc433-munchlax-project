@@ -46,7 +46,7 @@ python3 main.py <input_file> 1 1 1 1 1 1 1 1
   wminfilled wpref wpair wsecdiff pengamemin penpracticemin pennotpaired pensection 
  </p>
 
- Due to the random aspect of the program, to ensure that the program arrives at a complete solution, run for 10 seconds, if the prgram arrives at no complete solutions, terminate and retry until it arrives at complete
+ Due to the random aspect of the program, to ensure that the program arrives at a complete solution, run for 10 seconds, if the prgram arrives at no complete solutions, terminate and retry until it arrives at a complete solution.
 
 
 ---
