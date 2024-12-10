@@ -48,10 +48,6 @@ python3 main.py <input_file> 1 1 1 1 1 1 1 1
 
 
 ---
-## Required libraries: 
-- collections
-- signal
-- time (if you want to see runtime)
   
 ## Contributors
 - Aditi Yadav
