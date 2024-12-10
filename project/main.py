@@ -6,6 +6,7 @@
 # Thi Ngoc Anh Nguyen
 
 import os
+import random
 import signal
 import sys
 import traceback
@@ -109,6 +110,8 @@ def initialize_root(events, game_slots, practice_slots, partial_assign):
 # Helper function to sort the events so they aren't random, this also prioritizes the
 # evening slots and divisions starting with 9 so they can be places in evening slots first
 def reorder_events(events, incompatible_map, shuffle=False):
+    random.shuffle(events)
+    
     # Group events by league, tier, and division
     grouped = defaultdict(list)
     for event in events:
@@ -129,7 +132,9 @@ def reorder_events(events, incompatible_map, shuffle=False):
 
     # Separate teams with div=9* and others
     div_9_teams = [key for key in grouped if key[2].startswith("9")]
+    random.shuffle(div_9_teams)
     other_teams = [key for key in grouped if not key[2].startswith("9")]
+    random.shuffle(other_teams)
 
     # Function to add sorted events for a team (games first, then practices)
     def add_team_events(team_key):
@@ -255,7 +260,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, e
                 unscheduled_events_count = len(unscheduled_events)
                 best_eval_score = current_eval_score
                 best_schedule = node.schedule.copy_schedule()
-                node.schedule.print_schedule(current_eval_score)
+                # node.schedule.print_schedule(current_eval_score)
 
     # Check for already-visited states
     state_hash = hash(frozenset(node.schedule.scheduleVersion.items()))
