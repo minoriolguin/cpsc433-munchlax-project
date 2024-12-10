@@ -39,42 +39,51 @@ class SoftConstraints:
     # Uses pen_gamemin and pen_practicemin to compute penalty
     def eval_min_filled(self, current_slots, schedule):
         penalty = 0
+        processed_slots = set()  # Track slots that have already been processed
 
         for slot in current_slots:
-            # Print debug information for current slot
-            # print(f"Evaluating slot: {slot}")
+            # Generate a unique identifier for the slot to prevent duplicates
+            slot_key = (slot.day, slot.startTime, type(slot).__name__)
 
-            # Initialize counters for games and practices
+            # Skip the slot if it's already been processed
+            if slot_key in processed_slots:
+                continue
+
+            # Mark the slot as processed
+            processed_slots.add(slot_key)
+
+            # Collect assigned events for the slot
             assigned_games = []
             assigned_practices = []
 
-            # Iterate through scheduleVersion to collect assigned events for the slot
             for assigned_slot, event in schedule.scheduleVersion.items():
-                # Skip invalid entries
-                if event == "$":
+                if event == "$":  # Skip placeholders
                     continue
 
-                # Check if the slot matches and collect assigned events
+                # Check if the assigned slot matches the current slot
                 if self.is_same_slot(slot, assigned_slot):
                     if isinstance(event, Game):
                         assigned_games.append(event)
                     elif isinstance(event, Practice):
                         assigned_practices.append(event)
 
-            # Update slot's assigned events (useful for further evaluation)
+            # Update slot's assigned events
             if isinstance(slot, GameSlot):
                 slot.assignedGames = assigned_games
-                unfilled_games = max(0, slot.gameMin - len(slot.assignedGames))
-                if unfilled_games > 0:
+
+                # Penalize only if the slot has been partially or fully scheduled
+                if assigned_games or slot.gameMin > 0:
+                    unfilled_games = max(0, slot.gameMin - len(slot.assignedGames))
                     penalty += unfilled_games * self.input_parser.pen_gamemin
-                # print(f"Assigned games: {slot.assignedGames}, Penalty: {penalty}")
 
             elif isinstance(slot, PracticeSlot):
                 slot.assignedPractices = assigned_practices
-                unfilled_practices = max(0, slot.pracMin - len(slot.assignedPractices))
-                if unfilled_practices > 0:
+
+                # Penalize only if the slot has been partially or fully scheduled
+                if assigned_practices or slot.pracMin > 0:
+                    unfilled_practices = max(0, slot.pracMin - len(slot.assignedPractices))
                     penalty += unfilled_practices * self.input_parser.pen_practicemin
-                # print(f"Assigned practices: {slot.assignedPractices}, Penalty: {penalty}")
+
         return penalty
 
     # Uses the individual references in input file under "Preferences"

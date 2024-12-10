@@ -5,6 +5,8 @@
 # Monica Nguyen
 # Thi Ngoc Anh Nguyen
 
+import os
+import random
 import signal
 import sys
 import traceback
@@ -23,6 +25,8 @@ from random import shuffle
 import random
 
 # Global variables
+iteration_count = 0
+unscheduled_events_count = float('inf')
 softConstraints = None
 best_schedule = None
 best_eval_score = float('inf')
@@ -32,6 +36,7 @@ MAX_DEPTH = 500
 MIN_DEPTH = 100
 MAX_ATTEMPTS = 10
 current_attempts = 0
+
 
 # Signal handler to handle early stops
 def signal_handler(sig, frame):
@@ -115,6 +120,8 @@ def initialize_root(events, game_slots, practice_slots, partial_assign):
 # Helper function to sort the events so they aren't random, this also prioritizes the
 # evening slots and divisions starting with 9 so they can be places in evening slots first
 def reorder_events(events, incompatible_map, shuffle=False):
+    random.shuffle(events)
+    
     # Group events by league, tier, and division
     grouped = defaultdict(list)
     for event in events:
@@ -135,7 +142,9 @@ def reorder_events(events, incompatible_map, shuffle=False):
 
     # Separate teams with div=9* and others
     div_9_teams = [key for key in grouped if key[2].startswith("9")]
+    random.shuffle(div_9_teams)
     other_teams = [key for key in grouped if not key[2].startswith("9")]
+    random.shuffle(other_teams)
 
     # Function to add sorted events for a team (games first, then practices)
     def add_team_events(team_key):
@@ -375,6 +384,7 @@ def preprocess_incompatible_pairs(not_compatible):
 
 # And-Tree build
 def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, eval_f, incompatible_map, depth=0):
+
     # global current_attempts
 
     # if current_attempts >= MAX_ATTEMPTS and depth < MIN_DEPTH:
@@ -411,6 +421,16 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, e
     unscheduled_events = unscheduled_no_duplicate
     # print(unscheduled_no_duplicate)
 
+# =======
+#     global best_schedule, best_eval_score, best_schedule_is_complete, iteration_count, unscheduled_events_count
+    
+#     if depth > MAX_DEPTH:
+#         return
+    
+#     iteration_count+=1
+#     if iteration_count > MAX_ITERATIONS:
+#         return
+# >>>>>>> main
 
     # Evaluate the current schedule
     current_eval_score = eval_f(parent_slots, node.schedule)
@@ -429,6 +449,12 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, e
             # if current_eval_score < best_eval_score:
                 # best_eval_score = current_eval_score
                 # best_schedule = node.schedule.copy_schedule()
+# =======
+#             if len(unscheduled_events) < unscheduled_events_count:
+#                 unscheduled_events_count = len(unscheduled_events)
+#                 best_eval_score = current_eval_score
+#                 best_schedule = node.schedule.copy_schedule()
+# >>>>>>> main
                 # node.schedule.print_schedule(current_eval_score)
 
     # Check for already-visited states
@@ -658,8 +684,19 @@ def main():
         best_schedule.print_schedule(best_eval_score)
     else:
         print("No valid schedule found.")
+        
+    output_file_path = os.path.join(os.getcwd(), "output_" + os.path.basename(parser.filename))
+    with open(output_file_path, "w") as file:
+        if best_schedule:
+            print("\nBest schedule found: \n")
+            best_schedule.print_schedule(best_eval_score)
+            file.write(f"Eval-Value: {best_eval_score}\n")
+            file.write(best_schedule.to_string())  # Ensure your schedule class has a `to_string` method
+        else:
+            print("No valid schedule found.")
+            file.write("No valid schedule found.")
 
-    return root
+    return root 
 
 if __name__ == "__main__":
     root_node = main()

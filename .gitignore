@@ -5,3 +5,5 @@
 __pycache__/
 debugLog
 .DS_Store
+*.pyc
+*.xlsx
