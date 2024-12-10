@@ -442,6 +442,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, e
                 best_eval_score = current_eval_score
                 best_schedule = node.schedule.copy_schedule()
                 best_schedule_is_complete = True
+            return
     else:
         # Save best partial schedule
         if not best_schedule_is_complete:
