@@ -24,7 +24,6 @@ softConstraints = None
 best_schedule = None
 best_eval_score = float('inf')
 best_schedule_is_complete = False
-current_slots = []
 checked_states = set()
 MAX_DEPTH = 500
 
@@ -226,13 +225,12 @@ def preprocess_incompatible_pairs(not_compatible):
 
 # And-Tree build
 def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, eval_f, incompatible_map, depth=0):
-    global best_schedule, best_eval_score, best_schedule_is_complete, current_slots
+    global best_schedule, best_eval_score, best_schedule_is_complete
     if depth > MAX_DEPTH:
         return
 
     # Evaluate the current schedule
-    current_slots = parent_slots
-    current_eval_score = eval_f(current_slots, node.schedule)
+    current_eval_score = eval_f(parent_slots, node.schedule)
     if not unscheduled_events:
         # If all events are scheduled
         if check_hard_constraints(node.schedule):
@@ -244,9 +242,10 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, e
     else:
         # Save best partial schedule
         if not best_schedule_is_complete:
-            if current_eval_score < best_eval_score:
+            # if current_eval_score < best_eval_score:
                 best_eval_score = current_eval_score
                 best_schedule = node.schedule.copy_schedule()
+                node.schedule.print_schedule(current_eval_score)
 
     # Check for already-visited states
     state_hash = hash(frozenset(node.schedule.scheduleVersion.items()))
@@ -285,9 +284,9 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, e
 
             # Continue recursion with remaining events
             remaining_events = [e for e in unscheduled_events if e != event]
-            print(f"DEBUG: Before recursion, schedule: {node.schedule.print_schedule(current_eval_score)}")
+            # print(f"DEBUG: Before recursion, schedule: {node.schedule.print_schedule(current_eval_score)}")
             build_tree(child_node, remaining_events, child_slots, check_hard_constraints, eval_f, incompatible_map, depth + 1)
-            print(f"DEBUG: After recursion, schedule: {node.schedule.print_schedule(current_eval_score)}")
+            # print(f"DEBUG: After recursion, schedule: {node.schedule.print_schedule(current_eval_score)}")
 
             # Unassign event after exploring the branch
             new_schedule.unassign_event(event, slot)
@@ -332,14 +331,14 @@ def main():
         print(traceback.format_exc())
         if best_schedule:
             print("\nBest schedule found before error: \n")
-            best_schedule.print_schedule(softConstraints.eval(current_slots, best_schedule))
+            best_schedule.print_schedule(best_eval_score)
         else:
             print("No valid schedule found before error.")
         return
 
     if best_schedule:
         print("\nBest schedule found: \n")
-        best_schedule.print_schedule(softConstraints.eval(current_slots, best_schedule))
+        best_schedule.print_schedule(best_eval_score)
     else:
         print("No valid schedule found.")
 

@@ -135,7 +135,7 @@ class SoftConstraints:
             for tier, count in overlapping_tiers.items():
                 if count > 1:  # More than one division from the same tier
                     penalty += (count - 1) * self.input_parser.pen_section
-                    print(f"DEBUG: Overlapping divisions in slot {day}, {start_time}, tier {tier}: {count} divisions, penalty: {penalty}")
+                    # print(f"DEBUG: Overlapping divisions in slot {day}, {start_time}, tier {tier}: {count} divisions, penalty: {penalty}")
 
         return penalty
 
