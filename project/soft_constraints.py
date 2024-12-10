@@ -39,8 +39,19 @@ class SoftConstraints:
     # Uses pen_gamemin and pen_practicemin to compute penalty
     def eval_min_filled(self, current_slots, schedule):
         penalty = 0
+        processed_slots = set()  # Track slots that have already been processed
 
         for slot in current_slots:
+            # Generate a unique identifier for the slot to prevent duplicates
+            slot_key = (slot.day, slot.startTime, type(slot).__name__)
+
+            # Skip the slot if it's already been processed
+            if slot_key in processed_slots:
+                continue
+
+            # Mark the slot as processed
+            processed_slots.add(slot_key)
+
             # Collect assigned events for the slot
             assigned_games = []
             assigned_practices = []
