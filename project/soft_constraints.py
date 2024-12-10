@@ -28,7 +28,7 @@ class SoftConstraints:
         
     def is_same_slot(self, slot1, slot2):
         if not hasattr(slot1, 'day') or not hasattr(slot2, 'day'):
-            print(f"Invalid slot comparison: slot1={slot1}, slot2={slot2}")
+            # print(f"Invalid slot comparison: slot1={slot1}, slot2={slot2}")
             return False
         return (
             slot1.day == slot2.day and
@@ -42,7 +42,7 @@ class SoftConstraints:
 
         for slot in current_slots:
             # Print debug information for current slot
-            print(f"Evaluating slot: {slot}")
+            # print(f"Evaluating slot: {slot}")
 
             # Initialize counters for games and practices
             assigned_games = []
@@ -67,14 +67,14 @@ class SoftConstraints:
                 unfilled_games = max(0, slot.gameMin - len(slot.assignedGames))
                 if unfilled_games > 0:
                     penalty += unfilled_games * self.input_parser.pen_gamemin
-                print(f"Assigned games: {slot.assignedGames}, Penalty: {penalty}")
+                # print(f"Assigned games: {slot.assignedGames}, Penalty: {penalty}")
 
             elif isinstance(slot, PracticeSlot):
                 slot.assignedPractices = assigned_practices
                 unfilled_practices = max(0, slot.pracMin - len(slot.assignedPractices))
                 if unfilled_practices > 0:
                     penalty += unfilled_practices * self.input_parser.pen_practicemin
-                print(f"Assigned practices: {slot.assignedPractices}, Penalty: {penalty}")
+                # print(f"Assigned practices: {slot.assignedPractices}, Penalty: {penalty}")
         return penalty
 
     # Uses the individual references in input file under "Preferences"
