@@ -58,3 +58,22 @@ class Scheduler:
         new_schedule = Scheduler(events=self.events)
         new_schedule.scheduleVersion = self.scheduleVersion.copy()
         return new_schedule
+
+    def to_string(self):
+        output = []
+
+        id_width = 30
+        slot_width = 20
+
+        # Sort schedule by event ID
+        sorted_schedule = sorted(
+            [(event, slot) for slot, event in self.scheduleVersion.items() if event != "$"],
+            key=lambda x: x[0].id
+        )
+
+        for event, slot in sorted_schedule:
+            slot_info = f": {slot.day}, {slot.startTime}"
+            output.append(f"{event.id:<{id_width}}{slot_info:<{slot_width}}")
+        
+        return "\n".join(output)
+

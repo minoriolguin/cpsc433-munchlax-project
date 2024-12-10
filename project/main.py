@@ -5,6 +5,7 @@
 # Monica Nguyen
 # Thi Ngoc Anh Nguyen
 
+import os
 import signal
 import sys
 import traceback
@@ -20,12 +21,14 @@ from hardConstraints import HardConstraints
 from soft_constraints import SoftConstraints
 
 # Global variables
+iteration_count = 0
 softConstraints = None
 best_schedule = None
 best_eval_score = float('inf')
 best_schedule_is_complete = False
 checked_states = set()
 MAX_DEPTH = 500
+MAX_ITERATIONS = 100_000
 
 # Signal handler to handle early stops
 def signal_handler(sig, frame):
@@ -225,8 +228,13 @@ def preprocess_incompatible_pairs(not_compatible):
 
 # And-Tree build
 def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, eval_f, incompatible_map, depth=0):
-    global best_schedule, best_eval_score, best_schedule_is_complete
+    global best_schedule, best_eval_score, best_schedule_is_complete, iteration_count
+    
     if depth > MAX_DEPTH:
+        return
+    
+    iteration_count+=1
+    if iteration_count > MAX_ITERATIONS:
         return
 
     # Evaluate the current schedule
@@ -342,8 +350,19 @@ def main():
         best_schedule.print_schedule(best_eval_score)
     else:
         print("No valid schedule found.")
+        
+    output_file_path = os.path.join(os.getcwd(), "output_" + os.path.basename(parser.filename))
+    with open(output_file_path, "w") as file:
+        if best_schedule:
+            print("\nBest schedule found: \n")
+            best_schedule.print_schedule(best_eval_score)
+            file.write(f"Eval-Value: {best_eval_score}\n")
+            file.write(best_schedule.to_string())  # Ensure your schedule class has a `to_string` method
+        else:
+            print("No valid schedule found.")
+            file.write("No valid schedule found.")
 
-    return root
+    return root 
 
 if __name__ == "__main__":
     root_node = main()
