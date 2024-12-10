@@ -100,7 +100,7 @@ def initialize_root(events, game_slots, practice_slots, partial_assign):
             return None
 
         root_schedule.assign_event(event, slot)
-
+    
     return Node(schedule=root_schedule, sol="?")
 
 # Helper function to sort the events so they aren't random, this also prioritizes the
@@ -269,14 +269,15 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, e
             # Create a copy of the current slots and schedule
             child_slots = [s.copy() for s in parent_slots]
             new_schedule = node.schedule.copy_schedule()
+            copied_slot = slot.copy()
 
             # Assign the event to the slot
-            new_schedule.assign_event(event, slot)
+            new_schedule.assign_event(event, copied_slot)
 
             # Check the new schedule against hard constraints
             if not check_hard_constraints(new_schedule):
                 # Unassign if invalid
-                new_schedule.unassign_event(event, slot)
+                new_schedule.unassign_event(event, copied_slot)
                 continue
 
             # Create a new child node
@@ -290,7 +291,7 @@ def build_tree(node, unscheduled_events, parent_slots, check_hard_constraints, e
             print(f"DEBUG: After recursion, schedule: {node.schedule.print_schedule(current_eval_score)}")
 
             # Unassign event after exploring the branch
-            new_schedule.unassign_event(event, slot)
+            new_schedule.unassign_event(event, copied_slot)
 
 
 # Main method
