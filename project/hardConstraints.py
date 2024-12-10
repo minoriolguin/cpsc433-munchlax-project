@@ -17,6 +17,7 @@ class HardConstraints:
         # add assocciated games and practices to the incompatability list
         # so that we can reuse the compatability check to tell if assocciated practices and games are overlapping
         # (hard assignment 3 in the project description)
+
         for practice in input_parser.practices:
             for game in input_parser.games:
                 if practice.div == "":
@@ -34,6 +35,11 @@ class HardConstraints:
                     u_level2 = game_incompatable.tier[0:3]
                     if u_level2 in levels:
                         input_parser.not_compatible.append([game.id, game_incompatable.id])
+        
+        # for incompatable in input_parser.not_compatible:
+        #     if "CSSC O19T1 DIV 95 PRC 95" in incompatable:
+        #         print(incompatable)
+        # quit()
 
     # function to check if all hard constraints are satisfied
     def check_hard_constraints(self, schedule):
@@ -65,6 +71,11 @@ class HardConstraints:
                     num_games[slot.id] = 1
                 else:
                     if num_games[slot.id] + 1 > slot.gameMax:
+                        # schedule.print_schedule(0)
+                        # print(schedule.slot_to_events["game" + slot.id])
+                        # print(num_games[slot.id])
+                        # print(slot.gameMax)
+                        # quit()
                         return True
                     else:
                         num_games[slot.id] += 1
@@ -101,7 +112,10 @@ class HardConstraints:
             if event1_slot is not None and event2_slot is not None:
                 d1 = event1_slot.day
                 d2 = event2_slot.day
-                if d1 == d2 or (d1 == "FR" and d2 == "MO") or (d1 == "MO" and d2 == "FR"):
+                # if d1 == d2 or ((is_game(incompatible_pair[0]) and not is_game(incompatible_pair[1])) or ((not is_game(incompatible_pair[0]) and is_game(incompatible_pair[1]))) and ((d1 == "FR" and d2 == "MO") or (d1 == "MO" and d2 == "FR"))):
+                if d1 == d2 or \
+                ((((is_game(incompatible_pair[0]) and not is_game(incompatible_pair[1])) or (not is_game(incompatible_pair[0]) and is_game(incompatible_pair[1])))) and\
+                 ((d1 == "FR" and d2 == "MO") or (d1 == "MO" and d2 == "FR"))):
 
                     # convert the the times to ints
                     if len(str(event1_slot.startTime)) == 4:
@@ -148,6 +162,17 @@ class HardConstraints:
 
                     # check for overlap in the time intervals
                     if max(start1, start2) < min(end1, end2):
+                        schedule.print_schedule(0)
+                        print(incompatible_pair)
+
+                        # if d1 == "FR" or d2 == "FR":
+                        #     print("d1:", d1)
+                        #     print("d2:", d2)
+                        #     print(incompatible_pair)
+                        #     for p in incompatible_pair:
+                        #         print(is_game(p))
+                        #     print(((is_game(incompatible_pair[0]) and not is_game(incompatible_pair[1])) or (not is_game(incompatible_pair[0]) and is_game(incompatible_pair[1]))))
+                        #     quit()
                         return True
 
         # at this point no non-compatible pairs share the same slot
